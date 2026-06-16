@@ -1,0 +1,56 @@
+.guest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guest-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.guest-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.guest-star {
+  color: var(--color-gold);
+  margin-left: 6px;
+}
+
+.guest-meta {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.guest-note {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.guest-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.guest-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.guest-accommodation-badge {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 4px;
+}

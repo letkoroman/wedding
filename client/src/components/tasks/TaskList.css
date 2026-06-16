@@ -1,0 +1,125 @@
+.progress-wrap {
+  margin-bottom: 16px;
+}
+
+.progress-label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 10px;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-sage);
+  transition: width 0.3s ease;
+}
+
+.task-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.task-assignee-filter {
+  font-family: var(--font-body);
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  max-width: 280px;
+}
+
+.task-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.task-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.task-meta {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.task-note {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.task-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-status-select {
+  font-family: var(--font-body);
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.priority-low {
+  background: #e3ecdd;
+  color: #5c7a4d;
+}
+
+.priority-medium {
+  background: #f0e6da;
+  color: #9b8366;
+}
+
+.priority-high {
+  background: #f5dede;
+  color: #a35a5a;
+}

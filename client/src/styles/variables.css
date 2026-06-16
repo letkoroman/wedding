@@ -1,0 +1,15 @@
+:root {
+  --color-ivory: #FAF6F0;
+  --color-rose: #D8A7B1;
+  --color-sage: #9CAF88;
+  --color-gold: #D4AF37;
+  --color-text: #4a3f3a;
+  --color-text-light: #7a6a5e;
+  --color-border: #eee2d8;
+
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Lato', sans-serif;
+
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(74, 63, 58, 0.08);
+}

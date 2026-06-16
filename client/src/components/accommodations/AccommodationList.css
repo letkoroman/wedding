@@ -1,0 +1,50 @@
+.accommodation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.accommodation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.accommodation-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.accommodation-meta {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.accommodation-note {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.accommodation-capacity {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.accommodation-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accommodation-actions {
+  display: flex;
+  gap: 4px;
+}

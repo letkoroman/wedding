@@ -1,0 +1,25 @@
+.summary-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-around;
+  margin-bottom: 24px;
+}
+
+.summary-stat {
+  text-align: center;
+  min-width: 110px;
+}
+
+.summary-value {
+  font-family: var(--font-heading);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-rose);
+}
+
+.summary-label {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-top: 4px;
+}

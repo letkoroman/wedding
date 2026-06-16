@@ -139,3 +139,16 @@
 .stat-ok .stat-value {
   color: #16a34a;
 }
+
+.accommodation-guest-conflict {
+  background: #fef2f2;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: 1px -6px;
+}
+
+.accommodation-guest-conflict-msg {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 2px;
+}

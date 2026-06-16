@@ -8,6 +8,7 @@ function toGuest(row) {
     id: row.id,
     jmeno: row.jmeno,
     typ: row.typ,
+    pocetDospelych: row.pocet_dospelych,
     pocetDeti: row.pocet_deti,
     potvrzeni: row.potvrzeni,
     mustHave: row.must_have,
@@ -32,6 +33,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const jmeno = req.body.jmeno || '';
   const typ = req.body.typ || 'jednotlivec';
+  const pocetDospelych = Number(req.body.pocetDospelych) || 1;
   const pocetDeti = req.body.maDite ? Number(req.body.pocetDeti) || 0 : 0;
   const potvrzeni = req.body.potvrzeni || 'ceka';
   const mustHave = Boolean(req.body.mustHave);
@@ -47,10 +49,10 @@ router.post('/', async (req, res) => {
   const rezervaciaId = req.body.rezervaciaId || null;
 
   const [row] = await sql`
-    INSERT INTO guests (jmeno, typ, pocet_deti, potvrzeni, must_have, poznamka,
+    INSERT INTO guests (jmeno, typ, pocet_dospelych, pocet_deti, potvrzeni, must_have, poznamka,
       pocet_izieb, ubytovani_od, ubytovani_do,
       ma_dite, vek_deti, potrebuje_ubytovanie, typ_izby, pocet_osob, rezervacia_id)
-    VALUES (${jmeno}, ${typ}, ${pocetDeti}, ${potvrzeni}, ${mustHave}, ${poznamka},
+    VALUES (${jmeno}, ${typ}, ${pocetDospelych}, ${pocetDeti}, ${potvrzeni}, ${mustHave}, ${poznamka},
       ${pocetIzieb}, ${ubytovaniOd}, ${ubytovaniDo},
       ${maDite}, ${vekDeti}, ${potrebujeUbytovanie}, ${typIzby}, ${pocetOsob}, ${rezervaciaId})
     RETURNING *
@@ -65,6 +67,7 @@ router.put('/:id', async (req, res) => {
   }
   const typ = req.body.typ ?? existing.typ;
   const jmeno = req.body.jmeno ?? existing.jmeno;
+  const pocetDospelych = req.body.pocetDospelych !== undefined ? Number(req.body.pocetDospelych) || 1 : existing.pocet_dospelych;
   const potvrzeni = req.body.potvrzeni ?? existing.potvrzeni;
   const mustHave = req.body.mustHave ?? existing.must_have;
   const poznamka = req.body.poznamka ?? existing.poznamka;
@@ -83,6 +86,7 @@ router.put('/:id', async (req, res) => {
     UPDATE guests SET
       jmeno = ${jmeno},
       typ = ${typ},
+      pocet_dospelych = ${pocetDospelych},
       pocet_deti = ${pocetDeti},
       potvrzeni = ${potvrzeni},
       must_have = ${mustHave},

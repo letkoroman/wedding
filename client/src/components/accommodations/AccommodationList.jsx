@@ -17,6 +17,17 @@ const TYP_IZBY_LABELS = {
   twin_pristylka: 'twin beds + přistýlka'
 };
 
+function dateConflict(guest, res) {
+  if (!guest.ubytovaniOd || !guest.ubytovaniDo) return null;
+  const tooEarly = guest.ubytovaniOd < res.terminOd;
+  const tooLate = guest.ubytovaniDo > res.terminDo;
+  if (!tooEarly && !tooLate) return null;
+  const parts = [];
+  if (tooEarly) parts.push(`potřebuje od ${formatShortDate(guest.ubytovaniOd)}, rezervace od ${formatShortDate(res.terminOd)}`);
+  if (tooLate) parts.push(`potřebuje do ${formatShortDate(guest.ubytovaniDo)}, rezervace do ${formatShortDate(res.terminDo)}`);
+  return parts.join('; ');
+}
+
 export default function AccommodationList({ reservations, onEdit, onDelete }) {
   if (reservations.length === 0) {
     return <p className="empty-state">Zatím žádné rezervace ubytování. Přidejte první rezervaci.</p>;
@@ -31,6 +42,7 @@ export default function AccommodationList({ reservations, onEdit, onDelete }) {
         const roomsNeeded = assigned.reduce((s, g) => s + (g.pocetIzieb || 0), 0);
         const chybi = roomsNeeded - res.pocetIzieb;
         const ok = chybi <= 0;
+        const hasConflicts = assigned.some((g) => dateConflict(g, res));
 
         return (
           <li key={res.id} className="accommodation-row card">
@@ -50,36 +62,47 @@ export default function AccommodationList({ reservations, onEdit, onDelete }) {
               <div className="accommodation-capacity">
                 <span className={`capacity-badge ${ok ? 'badge-confirmed' : 'badge-declined'}`}>
                   {ok
-                    ? `✓ Kapacita OK (${res.pocetIzieb} ${roomsLabel(res.pocetIzieb)} rezerv. / ${roomsNeeded} potrebných)`
-                    : `⚠ Chybí ${Math.abs(chybi)} ${roomsLabel(Math.abs(chybi))} (${res.pocetIzieb} rezerv. / ${roomsNeeded} potrebných)`}
+                    ? `✓ Kapacita OK (${res.pocetIzieb} ${roomsLabel(res.pocetIzieb)} rezerv. / ${roomsNeeded} potřebných)`
+                    : `⚠ Chybí ${Math.abs(chybi)} ${roomsLabel(Math.abs(chybi))} (${res.pocetIzieb} rezerv. / ${roomsNeeded} potřebných)`}
                 </span>
+                {hasConflicts && (
+                  <span className="capacity-badge badge-declined" style={{ marginLeft: 8 }}>
+                    ⚠ Konflikt dat
+                  </span>
+                )}
               </div>
 
               {assigned.length > 0 && (
                 <div className="accommodation-guests">
-                  <div className="accommodation-guests-title">Priradení hostia ({assigned.length}):</div>
+                  <div className="accommodation-guests-title">Přiřazení hosté ({assigned.length}):</div>
                   <ul className="accommodation-guest-list">
-                    {assigned.map((g) => (
-                      <li key={g.id} className="accommodation-guest-item">
-                        <span className="accommodation-guest-name">{g.jmeno}</span>
-                        {g.typIzby && (
-                          <span className="accommodation-guest-room">
-                            {' '}· {TYP_IZBY_LABELS[g.typIzby] || g.typIzby}
-                            {g.pocetOsob > 0 && `, ${g.pocetOsob} os.`}
-                          </span>
-                        )}
-                        {g.ubytovaniOd && (
-                          <span className="accommodation-guest-dates">
-                            {' '}· {formatShortDate(g.ubytovaniOd)}–{formatShortDate(g.ubytovaniDo)}
-                          </span>
-                        )}
-                      </li>
-                    ))}
+                    {assigned.map((g) => {
+                      const conflict = dateConflict(g, res);
+                      return (
+                        <li key={g.id} className={`accommodation-guest-item${conflict ? ' accommodation-guest-conflict' : ''}`}>
+                          <span className="accommodation-guest-name">{g.jmeno}</span>
+                          {g.typIzby && (
+                            <span className="accommodation-guest-room">
+                              {' '}· {TYP_IZBY_LABELS[g.typIzby] || g.typIzby}
+                              {g.pocetOsob > 0 && `, ${g.pocetOsob} os.`}
+                            </span>
+                          )}
+                          {g.ubytovaniOd && (
+                            <span className="accommodation-guest-dates">
+                              {' '}· {formatShortDate(g.ubytovaniOd)}–{formatShortDate(g.ubytovaniDo)}
+                            </span>
+                          )}
+                          {conflict && (
+                            <div className="accommodation-guest-conflict-msg">⚠ {conflict}</div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
               {assigned.length === 0 && (
-                <div className="accommodation-guests-empty">Žiadni hostia nepriradení</div>
+                <div className="accommodation-guests-empty">Žádní hosté nepřiřazeni</div>
               )}
             </div>
           </li>

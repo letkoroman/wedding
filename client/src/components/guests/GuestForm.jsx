@@ -10,31 +10,42 @@ const TYP_IZBY_OPTIONS = [
 const EMPTY_GUEST = {
   jmeno: '',
   typ: 'jednotlivec',
+  pocetDospelych: 1,
   maDite: false,
-  pocetDeti: 0,
-  vekDeti: '',
+  pocetDeti: 1,
+  vekDeti: [''],
   potvrzeni: 'ceka',
   mustHave: false,
   poznamka: '',
-  potrebujeUbytovanie: false,
+  potrebujeUbytovani: false,
   pocetIzieb: 1,
-  ubytovaniOd: '',
-  ubytovaniDo: '',
+  ubytovaniOd: '2026-08-20',
+  ubytovaniDo: '2026-08-23',
   typIzby: 'double',
   pocetOsob: 1,
   rezervaciaId: ''
 };
 
+function parseVekDeti(vekDeti, pocetDeti) {
+  if (!vekDeti) return Array(pocetDeti).fill('');
+  const parts = vekDeti.split(',').map((s) => s.trim());
+  return Array.from({ length: pocetDeti }, (_, i) => parts[i] || '');
+}
+
 export default function GuestForm({ guest, accommodations = [], onSave, onClose }) {
+  const initPocetDeti = guest?.maDite ? (guest.pocetDeti || 1) : 1;
   const [form, setForm] = useState(
     guest
       ? {
           ...guest,
-          ubytovaniOd: guest.ubytovaniOd || '',
-          ubytovaniDo: guest.ubytovaniDo || '',
+          pocetDospelych: guest.pocetDospelych || 1,
+          pocetDeti: initPocetDeti,
+          vekDeti: parseVekDeti(guest.vekDeti, initPocetDeti),
+          ubytovaniOd: guest.ubytovaniOd || '2026-08-20',
+          ubytovaniDo: guest.ubytovaniDo || '2026-08-23',
           typIzby: guest.typIzby || 'double',
           rezervaciaId: guest.rezervaciaId || '',
-          vekDeti: guest.vekDeti || ''
+          potrebujeUbytovani: guest.potrebujeUbytovanie || false
         }
       : { ...EMPTY_GUEST }
   );
@@ -47,18 +58,34 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
     setForm((prev) => ({
       ...prev,
       maDite: checked,
-      pocetDeti: checked ? prev.pocetDeti : 0,
-      vekDeti: checked ? prev.vekDeti : ''
+      pocetDeti: checked ? prev.pocetDeti : 1,
+      vekDeti: checked ? prev.vekDeti : ['']
     }));
+  }
+
+  function updatePocetDeti(n) {
+    setForm((prev) => ({
+      ...prev,
+      pocetDeti: n,
+      vekDeti: Array.from({ length: n }, (_, i) => prev.vekDeti[i] || '')
+    }));
+  }
+
+  function updateVekDite(index, value) {
+    setForm((prev) => {
+      const arr = [...prev.vekDeti];
+      arr[index] = value;
+      return { ...prev, vekDeti: arr };
+    });
   }
 
   function updatePotrUbyt(checked) {
     setForm((prev) => ({
       ...prev,
-      potrebujeUbytovanie: checked,
+      potrebujeUbytovani: checked,
       pocetIzieb: checked ? prev.pocetIzieb : 1,
-      ubytovaniOd: checked ? prev.ubytovaniOd : '',
-      ubytovaniDo: checked ? prev.ubytovaniDo : '',
+      ubytovaniOd: checked ? prev.ubytovaniOd : '2026-08-20',
+      ubytovaniDo: checked ? prev.ubytovaniDo : '2026-08-23',
       typIzby: checked ? prev.typIzby : 'double',
       pocetOsob: checked ? prev.pocetOsob : 1,
       rezervaciaId: checked ? prev.rezervaciaId : ''
@@ -69,9 +96,10 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
     e.preventDefault();
     onSave({
       ...form,
-      ubytovaniOd: form.ubytovaniOd || null,
-      ubytovaniDo: form.ubytovaniDo || null,
-      vekDeti: form.vekDeti || null,
+      potrebujeUbytovanie: form.potrebujeUbytovani,
+      ubytovaniOd: form.potrebujeUbytovani ? (form.ubytovaniOd || null) : null,
+      ubytovaniDo: form.potrebujeUbytovani ? (form.ubytovaniDo || null) : null,
+      vekDeti: form.maDite ? (form.vekDeti.filter(Boolean).join(', ') || null) : null,
       rezervaciaId: form.rezervaciaId || null
     });
   }
@@ -99,6 +127,17 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
               <option value="rodina">Rodina</option>
             </select>
           </div>
+          <div className="form-row">
+            <label htmlFor="pocetDospelych">Počet dospělých</label>
+            <input
+              id="pocetDospelych"
+              type="number"
+              min="1"
+              step="1"
+              value={form.pocetDospelych}
+              onChange={(e) => update('pocetDospelych', Number(e.target.value))}
+            />
+          </div>
           <div className="form-row form-row-checkbox">
             <label>
               <input
@@ -116,7 +155,7 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
                 <select
                   id="pocetDeti"
                   value={form.pocetDeti}
-                  onChange={(e) => update('pocetDeti', Number(e.target.value))}
+                  onChange={(e) => updatePocetDeti(Number(e.target.value))}
                 >
                   <option value={1}>1</option>
                   <option value={2}>2</option>
@@ -124,16 +163,18 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
                   <option value={4}>4</option>
                 </select>
               </div>
-              <div className="form-row">
-                <label htmlFor="vekDeti">Věk dítěte / dětí</label>
-                <input
-                  id="vekDeti"
-                  type="text"
-                  placeholder="napr. 3, 7"
-                  value={form.vekDeti}
-                  onChange={(e) => update('vekDeti', e.target.value)}
-                />
-              </div>
+              {Array.from({ length: form.pocetDeti }, (_, i) => (
+                <div className="form-row" key={i}>
+                  <label htmlFor={`vek-${i}`}>Věk dítěte {i + 1}</label>
+                  <input
+                    id={`vek-${i}`}
+                    type="text"
+                    placeholder="napr. 5"
+                    value={form.vekDeti[i] || ''}
+                    onChange={(e) => updateVekDite(i, e.target.value)}
+                  />
+                </div>
+              ))}
             </>
           )}
           <div className="form-row">
@@ -151,20 +192,20 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
                 checked={form.mustHave}
                 onChange={(e) => update('mustHave', e.target.checked)}
               />
-              Must-have na obrad a obed
+              Must-have na obřad a oběd
             </label>
           </div>
           <div className="form-row form-row-checkbox">
             <label>
               <input
                 type="checkbox"
-                checked={form.potrebujeUbytovanie}
+                checked={form.potrebujeUbytovani}
                 onChange={(e) => updatePotrUbyt(e.target.checked)}
               />
-              Potrebuje ubytovanie?
+              Potřebuje ubytování?
             </label>
           </div>
-          {form.potrebujeUbytovanie && (
+          {form.potrebujeUbytovani && (
             <>
               <div className="form-row">
                 <label htmlFor="pocetIzieb">Počet pokojů</label>
@@ -178,7 +219,7 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
                 />
               </div>
               <div className="form-row">
-                <label htmlFor="typIzby">Typ izby</label>
+                <label htmlFor="typIzby">Typ pokoje</label>
                 <select
                   id="typIzby"
                   value={form.typIzby}
@@ -221,13 +262,13 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
                 />
               </div>
               <div className="form-row">
-                <label htmlFor="rezervaciaId">Rezervácia ubytowania</label>
+                <label htmlFor="rezervaciaId">Rezervace ubytování</label>
                 <select
                   id="rezervaciaId"
                   value={form.rezervaciaId}
                   onChange={(e) => update('rezervaciaId', e.target.value)}
                 >
-                  <option value="">— nepriradené —</option>
+                  <option value="">— nepřiřazeno —</option>
                   {accommodations.map((a) => (
                     <option key={a.id} value={a.id}>{a.nazev}</option>
                   ))}

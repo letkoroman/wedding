@@ -1,9 +1,3 @@
-const TYPE_LABELS = {
-  jednotlivec: 'Jednotlivec',
-  par: 'Pár',
-  rodina: 'Rodina'
-};
-
 const STATUS_LABELS = {
   ceka: 'Čeká na odpověď',
   potvrzeno: 'Potvrzeno',
@@ -22,6 +16,13 @@ const TYP_IZBY_LABELS = {
   twin: 'twin beds',
   twin_pristylka: 'twin beds + přistýlka'
 };
+
+function adultsLabel(count) {
+  const n = count || 1;
+  if (n === 1) return '1 dospělý';
+  if (n >= 2 && n <= 4) return `${n} dospělí`;
+  return `${n} dospělých`;
+}
 
 function childrenLabel(count) {
   if (count === 1) return '1 dítě';
@@ -53,10 +54,10 @@ export default function GuestList({ guests, onEdit, onDelete }) {
           <div className="guest-main">
             <div className="guest-name">
               {guest.jmeno}
-              {guest.mustHave && <span className="guest-star" title="Must-have na obrad a obed">★</span>}
+              {guest.mustHave && <span className="guest-star" title="Must-have na obřad a oběd">★</span>}
             </div>
             <div className="guest-meta">
-              {TYPE_LABELS[guest.typ]}
+              {adultsLabel(guest.pocetDospelych)}
               {guest.maDite && guest.pocetDeti > 0 && ` · ${childrenLabel(guest.pocetDeti)}`}
               {guest.maDite && guest.vekDeti && ` (${guest.vekDeti})`}
             </div>

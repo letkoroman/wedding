@@ -1,3 +1,9 @@
+function formatDate(isoDate) {
+  if (!isoDate) return '';
+  const [year, month, day] = isoDate.split('-');
+  return `${Number(day)}.${Number(month)}.${year}`;
+}
+
 function formatShortDate(isoDate) {
   if (!isoDate) return '';
   const [, month, day] = isoDate.split('-');
@@ -55,7 +61,7 @@ export default function AccommodationList({ reservations, onEdit, onDelete }) {
                 </div>
               </div>
               <div className="accommodation-meta">
-                {formatShortDate(res.terminOd)}–{formatShortDate(res.terminDo)}
+                {formatDate(res.terminOd)} – {formatDate(res.terminDo)}
               </div>
               {res.poznamka && <div className="accommodation-note">{res.poznamka}</div>}
 

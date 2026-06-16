@@ -1,21 +1,34 @@
 .gallery {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
 }
 
 .gallery-photo {
-  width: 33.3333%;
-  height: 220px;
+  width: 100%;
+  height: 240px;
   object-fit: cover;
+  object-position: center center;
   display: block;
+}
+
+.gallery-photo:nth-child(1) {
+  object-position: center 60%;
+}
+
+.gallery-photo:nth-child(2) {
+  object-position: center center;
+}
+
+.gallery-photo:nth-child(3) {
+  object-position: center center;
 }
 
 @media (max-width: 700px) {
   .gallery {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .gallery-photo {
-    width: 100%;
-    height: 160px;
+    height: 200px;
   }
 }

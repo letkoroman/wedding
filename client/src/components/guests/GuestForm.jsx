@@ -120,14 +120,6 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
             />
           </div>
           <div className="form-row">
-            <label htmlFor="typ">Typ</label>
-            <select id="typ" value={form.typ} onChange={(e) => update('typ', e.target.value)}>
-              <option value="jednotlivec">Jednotlivec</option>
-              <option value="par">Pár</option>
-              <option value="rodina">Rodina</option>
-            </select>
-          </div>
-          <div className="form-row">
             <label htmlFor="pocetDospelych">Počet dospělých</label>
             <input
               id="pocetDospelych"
@@ -165,11 +157,13 @@ export default function GuestForm({ guest, accommodations = [], onSave, onClose 
               </div>
               {Array.from({ length: form.pocetDeti }, (_, i) => (
                 <div className="form-row" key={i}>
-                  <label htmlFor={`vek-${i}`}>Věk dítěte {i + 1}</label>
+                  <label htmlFor={`vek-${i}`}>Věk {i + 1}. dítěte (roky)</label>
                   <input
                     id={`vek-${i}`}
-                    type="text"
-                    placeholder="napr. 5"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
                     value={form.vekDeti[i] || ''}
                     onChange={(e) => updateVekDite(i, e.target.value)}
                   />

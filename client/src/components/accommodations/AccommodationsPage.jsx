@@ -4,17 +4,6 @@ import AccommodationList from './AccommodationList.jsx';
 import AccommodationForm from './AccommodationForm.jsx';
 import './AccommodationList.css';
 
-function overlaps(guest, reservation) {
-  return guest.ubytovaniOd <= reservation.terminDo && guest.ubytovaniDo >= reservation.terminOd;
-}
-
-function computePotrebujeme(reservation, guests) {
-  return guests
-    .filter((g) => g.pocetIzieb > 0 && g.ubytovaniOd && g.ubytovaniDo)
-    .filter((g) => overlaps(g, reservation))
-    .reduce((sum, g) => sum + g.pocetIzieb, 0);
-}
-
 export default function AccommodationsPage() {
   const [reservations, setReservations] = useState([]);
   const [guests, setGuests] = useState([]);
@@ -53,9 +42,15 @@ export default function AccommodationsPage() {
     setShowForm(true);
   }
 
-  const withCapacity = reservations.map((r) => ({
+  const guestsNeedingRoom = guests.filter((g) => g.potrebujeUbytovanie && g.pocetIzieb > 0);
+  const guestsUnassigned = guestsNeedingRoom.filter((g) => !g.rezervaciaId);
+  const totalRoomsNeeded = guestsNeedingRoom.reduce((s, g) => s + g.pocetIzieb, 0);
+  const totalRoomsReserved = reservations.reduce((s, r) => s + r.pocetIzieb, 0);
+  const totalShortfall = totalRoomsNeeded - totalRoomsReserved;
+
+  const reservationsWithGuests = reservations.map((r) => ({
     ...r,
-    potrebujeme: computePotrebujeme(r, guests)
+    assignedGuests: guestsNeedingRoom.filter((g) => g.rezervaciaId === r.id)
   }));
 
   return (
@@ -64,7 +59,36 @@ export default function AccommodationsPage() {
         <h2>Ubytování</h2>
         <button className="btn" onClick={openAdd}>+ Přidat rezervaci</button>
       </div>
-      <AccommodationList reservations={withCapacity} onEdit={openEdit} onDelete={handleDelete} />
+
+      <div className="accommodation-stats card">
+        <div className="stat-row">
+          <span className="stat-label">Hostia s ubytovaním</span>
+          <span className="stat-value">{guestsNeedingRoom.length} ({totalRoomsNeeded} {totalRoomsNeeded === 1 ? 'pokoj' : totalRoomsNeeded <= 4 ? 'pokoje' : 'pokojů'})</span>
+        </div>
+        <div className="stat-row">
+          <span className="stat-label">Celkom rezervovaných</span>
+          <span className="stat-value">{totalRoomsReserved} {totalRoomsReserved === 1 ? 'pokoj' : totalRoomsReserved <= 4 ? 'pokoje' : 'pokojů'}</span>
+        </div>
+        <div className={`stat-row stat-total ${totalShortfall > 0 ? 'stat-warning' : 'stat-ok'}`}>
+          <span className="stat-label">{totalShortfall > 0 ? '⚠ Chýba' : '✓ Prebytok / OK'}</span>
+          <span className="stat-value">
+            {Math.abs(totalShortfall)} {Math.abs(totalShortfall) === 1 ? 'pokoj' : Math.abs(totalShortfall) <= 4 ? 'pokoje' : 'pokojů'}
+          </span>
+        </div>
+        {guestsUnassigned.length > 0 && (
+          <div className="stat-row stat-warning">
+            <span className="stat-label">⚠ Nepriradení hostia</span>
+            <span className="stat-value">{guestsUnassigned.map((g) => g.jmeno).join(', ')}</span>
+          </div>
+        )}
+      </div>
+
+      <AccommodationList
+        reservations={reservationsWithGuests}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+      />
+
       {showForm && (
         <AccommodationForm
           reservation={editingReservation}

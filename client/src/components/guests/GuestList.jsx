@@ -16,6 +16,13 @@ const STATUS_BADGE_CLASS = {
   nepride: 'badge-declined'
 };
 
+const TYP_IZBY_LABELS = {
+  double: 'double bed',
+  double_pristylka: 'double bed + přistýlka',
+  twin: 'twin beds',
+  twin_pristylka: 'twin beds + přistýlka'
+};
+
 function childrenLabel(count) {
   if (count === 1) return '1 dítě';
   if (count >= 2 && count <= 4) return `${count} děti`;
@@ -29,6 +36,7 @@ function roomsLabel(count) {
 }
 
 function formatShortDate(isoDate) {
+  if (!isoDate) return '';
   const [, month, day] = isoDate.split('-');
   return `${Number(day)}.${Number(month)}.`;
 }
@@ -45,16 +53,19 @@ export default function GuestList({ guests, onEdit, onDelete }) {
           <div className="guest-main">
             <div className="guest-name">
               {guest.jmeno}
-              {guest.mustHave && <span className="guest-star" title="Must-have">★</span>}
+              {guest.mustHave && <span className="guest-star" title="Must-have na obrad a obed">★</span>}
             </div>
             <div className="guest-meta">
               {TYPE_LABELS[guest.typ]}
-              {guest.typ === 'rodina' && guest.pocetDeti > 0 && ` · ${childrenLabel(guest.pocetDeti)}`}
+              {guest.maDite && guest.pocetDeti > 0 && ` · ${childrenLabel(guest.pocetDeti)}`}
+              {guest.maDite && guest.vekDeti && ` (${guest.vekDeti})`}
             </div>
             {guest.poznamka && <div className="guest-note">{guest.poznamka}</div>}
-            {guest.pocetIzieb > 0 && (
+            {guest.potrebujeUbytovanie && guest.pocetIzieb > 0 && (
               <div className="guest-accommodation-badge">
-                🛏️ {guest.pocetIzieb} {roomsLabel(guest.pocetIzieb)} ({formatShortDate(guest.ubytovaniOd)}–{formatShortDate(guest.ubytovaniDo)})
+                🛏️ {guest.pocetIzieb} {roomsLabel(guest.pocetIzieb)} · {TYP_IZBY_LABELS[guest.typIzby] || guest.typIzby}
+                {guest.pocetOsob > 0 && ` · ${guest.pocetOsob} os.`}
+                {guest.ubytovaniOd && ` · ${formatShortDate(guest.ubytovaniOd)}–${formatShortDate(guest.ubytovaniDo)}`}
               </div>
             )}
           </div>

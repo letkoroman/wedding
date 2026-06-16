@@ -17,8 +17,10 @@ export default function TasksPage() {
     tasksApi.list().then(setTasks);
   }, []);
 
+  const assignees = [...new Set(tasks.map((t) => t.prirazeno).filter(Boolean))].sort();
+
   const filtered = tasks.filter((t) =>
-    t.prirazeno.toLowerCase().includes(assigneeFilter.toLowerCase())
+    !assigneeFilter || t.prirazeno === assigneeFilter
   );
 
   async function handleSave(data) {
@@ -60,6 +62,7 @@ export default function TasksPage() {
         <TaskFilter
           assignee={assigneeFilter}
           onAssigneeChange={setAssigneeFilter}
+          assignees={assignees}
           view={view}
           onViewChange={setView}
         />

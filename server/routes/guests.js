@@ -14,7 +14,13 @@ function toGuest(row) {
     poznamka: row.poznamka,
     pocetIzieb: row.pocet_izieb,
     ubytovaniOd: row.ubytovani_od,
-    ubytovaniDo: row.ubytovani_do
+    ubytovaniDo: row.ubytovani_do,
+    maDite: row.ma_dite,
+    vekDeti: row.vek_deti,
+    potrebujeUbytovanie: row.potrebuje_ubytovanie,
+    typIzby: row.typ_izby,
+    pocetOsob: row.pocet_osob,
+    rezervaciaId: row.rezervacia_id
   };
 }
 
@@ -26,17 +32,27 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const jmeno = req.body.jmeno || '';
   const typ = req.body.typ || 'jednotlivec';
-  const pocetDeti = typ === 'rodina' ? Number(req.body.pocetDeti) || 0 : 0;
+  const pocetDeti = req.body.maDite ? Number(req.body.pocetDeti) || 0 : 0;
   const potvrzeni = req.body.potvrzeni || 'ceka';
   const mustHave = Boolean(req.body.mustHave);
   const poznamka = req.body.poznamka || '';
-  const pocetIzieb = Number(req.body.pocetIzieb) || 0;
-  const ubytovaniOd = pocetIzieb > 0 ? (req.body.ubytovaniOd || null) : null;
-  const ubytovaniDo = pocetIzieb > 0 ? (req.body.ubytovaniDo || null) : null;
+  const maDite = Boolean(req.body.maDite);
+  const vekDeti = maDite ? (req.body.vekDeti || null) : null;
+  const potrebujeUbytovanie = Boolean(req.body.potrebujeUbytovanie);
+  const pocetIzieb = potrebujeUbytovanie ? Number(req.body.pocetIzieb) || 0 : 0;
+  const ubytovaniOd = potrebujeUbytovanie ? (req.body.ubytovaniOd || null) : null;
+  const ubytovaniDo = potrebujeUbytovanie ? (req.body.ubytovaniDo || null) : null;
+  const typIzby = potrebujeUbytovanie ? (req.body.typIzby || null) : null;
+  const pocetOsob = potrebujeUbytovanie ? Number(req.body.pocetOsob) || 1 : 1;
+  const rezervaciaId = req.body.rezervaciaId || null;
 
   const [row] = await sql`
-    INSERT INTO guests (jmeno, typ, pocet_deti, potvrzeni, must_have, poznamka, pocet_izieb, ubytovani_od, ubytovani_do)
-    VALUES (${jmeno}, ${typ}, ${pocetDeti}, ${potvrzeni}, ${mustHave}, ${poznamka}, ${pocetIzieb}, ${ubytovaniOd}, ${ubytovaniDo})
+    INSERT INTO guests (jmeno, typ, pocet_deti, potvrzeni, must_have, poznamka,
+      pocet_izieb, ubytovani_od, ubytovani_do,
+      ma_dite, vek_deti, potrebuje_ubytovanie, typ_izby, pocet_osob, rezervacia_id)
+    VALUES (${jmeno}, ${typ}, ${pocetDeti}, ${potvrzeni}, ${mustHave}, ${poznamka},
+      ${pocetIzieb}, ${ubytovaniOd}, ${ubytovaniDo},
+      ${maDite}, ${vekDeti}, ${potrebujeUbytovanie}, ${typIzby}, ${pocetOsob}, ${rezervaciaId})
     RETURNING *
   `;
   res.status(201).json(toGuest(row));
@@ -49,13 +65,19 @@ router.put('/:id', async (req, res) => {
   }
   const typ = req.body.typ ?? existing.typ;
   const jmeno = req.body.jmeno ?? existing.jmeno;
-  const pocetDeti = typ === 'rodina' ? Number(req.body.pocetDeti ?? existing.pocet_deti) || 0 : 0;
   const potvrzeni = req.body.potvrzeni ?? existing.potvrzeni;
   const mustHave = req.body.mustHave ?? existing.must_have;
   const poznamka = req.body.poznamka ?? existing.poznamka;
-  const pocetIzieb = req.body.pocetIzieb !== undefined ? Number(req.body.pocetIzieb) || 0 : existing.pocet_izieb;
-  const ubytovaniOd = pocetIzieb > 0 ? (req.body.ubytovaniOd ?? existing.ubytovani_od) : null;
-  const ubytovaniDo = pocetIzieb > 0 ? (req.body.ubytovaniDo ?? existing.ubytovani_do) : null;
+  const maDite = req.body.maDite !== undefined ? Boolean(req.body.maDite) : existing.ma_dite;
+  const pocetDeti = maDite ? (req.body.pocetDeti !== undefined ? Number(req.body.pocetDeti) || 0 : existing.pocet_deti) : 0;
+  const vekDeti = maDite ? (req.body.vekDeti !== undefined ? req.body.vekDeti : existing.vek_deti) : null;
+  const potrebujeUbytovanie = req.body.potrebujeUbytovanie !== undefined ? Boolean(req.body.potrebujeUbytovanie) : existing.potrebuje_ubytovanie;
+  const pocetIzieb = potrebujeUbytovanie ? (req.body.pocetIzieb !== undefined ? Number(req.body.pocetIzieb) || 0 : existing.pocet_izieb) : 0;
+  const ubytovaniOd = potrebujeUbytovanie ? (req.body.ubytovaniOd !== undefined ? req.body.ubytovaniOd : existing.ubytovani_od) : null;
+  const ubytovaniDo = potrebujeUbytovanie ? (req.body.ubytovaniDo !== undefined ? req.body.ubytovaniDo : existing.ubytovani_do) : null;
+  const typIzby = potrebujeUbytovanie ? (req.body.typIzby !== undefined ? req.body.typIzby : existing.typ_izby) : null;
+  const pocetOsob = potrebujeUbytovanie ? (req.body.pocetOsob !== undefined ? Number(req.body.pocetOsob) || 1 : existing.pocet_osob) : 1;
+  const rezervaciaId = req.body.rezervaciaId !== undefined ? (req.body.rezervaciaId || null) : existing.rezervacia_id;
 
   const [row] = await sql`
     UPDATE guests SET
@@ -67,7 +89,13 @@ router.put('/:id', async (req, res) => {
       poznamka = ${poznamka},
       pocet_izieb = ${pocetIzieb},
       ubytovani_od = ${ubytovaniOd},
-      ubytovani_do = ${ubytovaniDo}
+      ubytovani_do = ${ubytovaniDo},
+      ma_dite = ${maDite},
+      vek_deti = ${vekDeti},
+      potrebuje_ubytovanie = ${potrebujeUbytovanie},
+      typ_izby = ${typIzby},
+      pocet_osob = ${pocetOsob},
+      rezervacia_id = ${rezervaciaId}
     WHERE id = ${req.params.id}
     RETURNING *
   `;

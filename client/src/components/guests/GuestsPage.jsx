@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { guestsApi } from '../../api.js';
+import { guestsApi, accommodationsApi } from '../../api.js';
 import GuestSummaryCard from './GuestSummaryCard.jsx';
 import GuestFilter from './GuestFilter.jsx';
 import GuestList from './GuestList.jsx';
@@ -8,12 +8,14 @@ import './GuestList.css';
 
 export default function GuestsPage() {
   const [guests, setGuests] = useState([]);
+  const [accommodations, setAccommodations] = useState([]);
   const [filter, setFilter] = useState('vsichni');
   const [editingGuest, setEditingGuest] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     guestsApi.list().then(setGuests);
+    accommodationsApi.list().then(setAccommodations);
   }, []);
 
   const filtered = guests.filter((g) => {
@@ -61,6 +63,7 @@ export default function GuestsPage() {
       {showForm && (
         <GuestForm
           guest={editingGuest}
+          accommodations={accommodations}
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditingGuest(null); }}
         />

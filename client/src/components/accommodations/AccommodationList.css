@@ -152,3 +152,158 @@
   color: #dc2626;
   margin-top: 2px;
 }
+
+/* ─── Conflict banner ─── */
+.conflict-banner {
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  border-left: 4px solid #dc2626;
+}
+
+/* ─── Date range cards ─── */
+.date-range-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.date-range-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  border-left: 4px solid #e5e7eb;
+}
+
+.date-range-card.severity-high {
+  border-left-color: #dc2626;
+  background: #fff8f8;
+}
+
+.date-range-card.severity-low {
+  border-left-color: #f59e0b;
+  background: #fffdf5;
+}
+
+.date-range-card.severity-ok {
+  border-left-color: #16a34a;
+  background: #f9fff9;
+}
+
+.date-range-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.date-range-card-date {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.date-range-card-shortage {
+  font-weight: 700;
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.date-range-card-ok {
+  font-weight: 700;
+  font-size: 13px;
+  color: #16a34a;
+}
+
+.date-range-card-guests {
+  font-size: 13px;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.date-range-card-rooms {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+/* ─── Mini calendar ─── */
+.mini-calendar {
+  margin-bottom: 20px;
+  padding: 16px;
+}
+
+.mini-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mini-calendar-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.mini-calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+.mini-cal-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mini-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.mini-cal-dayname {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-light);
+  padding: 3px 0;
+  letter-spacing: 0.3px;
+}
+
+.mini-cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+
+.mini-cal-cell:hover:not(.mini-cal-empty):not(.mini-cal-neutral) {
+  opacity: 0.8;
+}
+
+.mini-cal-empty { background: transparent; }
+.mini-cal-neutral { background: #f3f4f6; color: #9ca3af; }
+.mini-cal-green  { background: #dcfce7; color: #15803d; }
+.mini-cal-orange { background: #fef3c7; color: #92400e; }
+.mini-cal-red    { background: #fee2e2; color: #dc2626; }

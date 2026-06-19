@@ -1,14 +1,8 @@
-function addMinutes(time, minutes) {
-  const [h, m] = time.split(':').map(Number);
-  const total = h * 60 + m + minutes;
-  const wrapped = ((total % 1440) + 1440) % 1440;
-  const hh = Math.floor(wrapped / 60).toString().padStart(2, '0');
-  const mm = (wrapped % 60).toString().padStart(2, '0');
-  return `${hh}:${mm}`;
-}
+import { CATEGORIES } from './categories.js';
 
 export default function AgendaItem({ item, onEdit, onDelete }) {
-  const endTime = addMinutes(item.casZacatku, item.trvani);
+  const cat = CATEGORIES[item.kategorie] || CATEGORIES.ceremonie;
+  const endTime = item.casKonce || '—';
 
   return (
     <div className="agenda-item">
@@ -20,6 +14,12 @@ export default function AgendaItem({ item, onEdit, onDelete }) {
         <div className="agenda-card-header">
           <span className="agenda-icon">{item.ikona}</span>
           <span className="agenda-name">{item.nazev}</span>
+          <span
+            className="agenda-category-badge"
+            style={{ background: cat.bg, color: cat.text, borderColor: cat.border }}
+          >
+            {cat.icon} {cat.label}
+          </span>
           <div className="agenda-actions">
             <button className="btn-icon" onClick={() => onEdit(item)} title="Upravit">✎</button>
             <button className="btn-icon" onClick={() => onDelete(item.id)} title="Smazat">🗑</button>

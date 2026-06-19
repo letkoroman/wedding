@@ -1,17 +1,41 @@
 import { useState } from 'react';
+import { CATEGORY_OPTIONS } from './categories.js';
 
-const ICONS = ['💍', '🥂', '🍽️', '💃', '📸', '🎵', '🚗', '⛪', '🌸', '🎂'];
+const ICONS = ['💍', '🥂', '🍽️', '💃', '📸', '🎵', '🚗', '⛪', '🌸', '🎂', '⚽', '🎉'];
 
 const EMPTY_ITEM = {
   nazev: '',
-  casZacatku: '12:00',
-  trvani: 30,
+  casZacatku: '10:00',
+  casKonce: '11:00',
+  kategorie: 'ceremonie',
   ikona: ICONS[0],
   poznamka: ''
 };
 
+function toMinutes(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function computeDuration(casZacatku, casKonce) {
+  if (!casZacatku || !casKonce) return null;
+  let diff = toMinutes(casKonce) - toMinutes(casZacatku);
+  if (diff < 0) diff += 1440;
+  if (diff <= 0) return null;
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${m} min`;
+}
+
 export default function AgendaForm({ item, onSave, onClose }) {
-  const [form, setForm] = useState(item ? { ...item } : { ...EMPTY_ITEM });
+  const [form, setForm] = useState(
+    item
+      ? { ...item, casKonce: item.casKonce || '' }
+      : { ...EMPTY_ITEM }
+  );
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -21,6 +45,8 @@ export default function AgendaForm({ item, onSave, onClose }) {
     e.preventDefault();
     onSave(form);
   }
+
+  const duration = computeDuration(form.casZacatku, form.casKonce);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -38,27 +64,47 @@ export default function AgendaForm({ item, onSave, onClose }) {
             />
           </div>
           <div className="form-row">
-            <label htmlFor="casZacatku">Čas začátku</label>
-            <input
-              id="casZacatku"
-              type="time"
-              value={form.casZacatku}
-              onChange={(e) => update('casZacatku', e.target.value)}
-              required
-            />
+            <label htmlFor="kategorie">Kategorie</label>
+            <select
+              id="kategorie"
+              value={form.kategorie}
+              onChange={(e) => update('kategorie', e.target.value)}
+            >
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
-          <div className="form-row">
-            <label htmlFor="trvani">Trvání (minuty)</label>
-            <input
-              id="trvani"
-              type="number"
-              min="0"
-              step="5"
-              value={form.trvani}
-              onChange={(e) => update('trvani', Number(e.target.value))}
-              required
-            />
+          <div className="form-row-pair">
+            <div className="form-row">
+              <label htmlFor="casZacatku">Čas začátku</label>
+              <input
+                id="casZacatku"
+                type="time"
+                step="900"
+                value={form.casZacatku}
+                onChange={(e) => update('casZacatku', e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="casKonce">Čas konce</label>
+              <input
+                id="casKonce"
+                type="time"
+                step="900"
+                value={form.casKonce}
+                onChange={(e) => update('casKonce', e.target.value)}
+                required
+              />
+            </div>
           </div>
+          {duration && (
+            <div className="form-row">
+              <label>Délka trvání</label>
+              <div className="form-computed-value">{duration}</div>
+            </div>
+          )}
           <div className="form-row">
             <label htmlFor="ikona">Ikona</label>
             <select id="ikona" value={form.ikona} onChange={(e) => update('ikona', e.target.value)}>

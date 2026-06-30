@@ -41,6 +41,7 @@ export default function CategoryForm({ onSave, onClose }) {
                   key={opt}
                   type="button"
                   className={opt === icon ? 'selected' : ''}
+                  aria-label={`Zvolit ikonu ${opt}`}
                   onClick={() => setIcon(opt)}
                 >
                   {opt}
@@ -57,6 +58,7 @@ export default function CategoryForm({ onSave, onClose }) {
                   type="button"
                   className={`swatch ${opt === accent ? 'selected' : ''}`}
                   style={{ background: opt }}
+                  aria-label={`Zvolit barvu ${opt}`}
                   onClick={() => setAccent(opt)}
                 />
               ))}

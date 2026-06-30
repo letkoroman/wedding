@@ -110,11 +110,11 @@ export default function AgendaForm({ item, presetIdea, categories, onSave, onClo
 
           <div className="form-row">
             <label>Termín</label>
-            <div className="seg-control" style={{ margin: 0 }}>
-              <button type="button" className={`seg-btn ${mode === 'schedule' ? 'active' : ''}`} onClick={() => setMode('schedule')}>
+            <div className="seg-control" role="tablist" style={{ margin: 0 }}>
+              <button type="button" role="tab" aria-selected={mode === 'schedule'} className={`seg-btn ${mode === 'schedule' ? 'active' : ''}`} onClick={() => setMode('schedule')}>
                 Naplánovat s časem
               </button>
-              <button type="button" className={`seg-btn ${mode === 'idea' ? 'active' : ''}`} onClick={() => setMode('idea')}>
+              <button type="button" role="tab" aria-selected={mode === 'idea'} className={`seg-btn ${mode === 'idea' ? 'active' : ''}`} onClick={() => setMode('idea')}>
                 Nápad bez termínu
               </button>
             </div>
@@ -128,21 +128,21 @@ export default function AgendaForm({ item, presetIdea, categories, onSave, onClo
                   <div className="time-field">
                     <span className="time-field-label">Začátek</span>
                     <div className="time-stepper">
-                      <button type="button" className="stepper-btn" onClick={() => step('casZacatku', -1)}>−</button>
+                      <button type="button" className="stepper-btn" aria-label="O 15 minut dříve" onClick={() => step('casZacatku', -1)}>−</button>
                       <select value={form.casZacatku} onChange={(e) => handleStartChange(e.target.value)}>
                         {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <button type="button" className="stepper-btn" onClick={() => step('casZacatku', 1)}>+</button>
+                      <button type="button" className="stepper-btn" aria-label="O 15 minut později" onClick={() => step('casZacatku', 1)}>+</button>
                     </div>
                   </div>
                   <div className="time-field">
                     <span className="time-field-label">Konec</span>
                     <div className="time-stepper">
-                      <button type="button" className="stepper-btn" onClick={() => step('casKonce', -1)}>−</button>
+                      <button type="button" className="stepper-btn" aria-label="O 15 minut dříve" onClick={() => step('casKonce', -1)}>−</button>
                       <select value={form.casKonce} onChange={(e) => handleEndChange(e.target.value)}>
                         {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <button type="button" className="stepper-btn" onClick={() => step('casKonce', 1)}>+</button>
+                      <button type="button" className="stepper-btn" aria-label="O 15 minut později" onClick={() => step('casKonce', 1)}>+</button>
                     </div>
                   </div>
                 </div>

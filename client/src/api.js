@@ -39,3 +39,9 @@ export const accommodationsApi = {
   update: (id, data) => request(`/accommodations/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id) => request(`/accommodations/${id}`, { method: 'DELETE' })
 };
+
+export const categoriesApi = {
+  list: () => request('/categories'),
+  create: (data) => request('/categories', { method: 'POST', body: JSON.stringify(data) }),
+  remove: (key) => request(`/categories/${key}`, { method: 'DELETE' })
+};

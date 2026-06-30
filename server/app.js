@@ -3,6 +3,7 @@ import guestsRouter from './routes/guests.js';
 import agendaRouter from './routes/agenda.js';
 import tasksRouter from './routes/tasks.js';
 import accommodationsRouter from './routes/accommodations.js';
+import categoriesRouter from './routes/categories.js';
 
 const app = express();
 
@@ -12,5 +13,6 @@ app.use('/api/guests', guestsRouter);
 app.use('/api/agenda', agendaRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/accommodations', accommodationsRouter);
+app.use('/api/categories', categoriesRouter);
 
 export default app;

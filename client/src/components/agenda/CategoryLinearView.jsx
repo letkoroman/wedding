@@ -16,10 +16,11 @@ export default function CategoryLinearView({ items, categories, onDelete, onEdit
 
   return (
     <div>
-      <div className="pill-row">
+      <div className="pill-row" role="group" aria-label="Filtr podle kategorie">
         <button
           className={`pill ${filter === 'vse' ? 'active' : ''}`}
           style={filter === 'vse' ? { background: '#4a3f3a' } : undefined}
+          aria-pressed={filter === 'vse'}
           onClick={() => setFilter('vse')}
         >
           Vše
@@ -29,6 +30,7 @@ export default function CategoryLinearView({ items, categories, onDelete, onEdit
             key={cat.key}
             className={`pill ${filter === cat.key ? 'active' : ''}`}
             style={filter === cat.key ? { background: cat.accent } : undefined}
+            aria-pressed={filter === cat.key}
             onClick={() => setFilter(cat.key)}
           >
             {cat.icon} {cat.label}
@@ -60,6 +62,7 @@ export default function CategoryLinearView({ items, categories, onDelete, onEdit
                       type="button"
                       className="lc-delete"
                       title="Smazat aktivitu"
+                      aria-label="Smazat aktivitu"
                       onClick={(e) => { e.stopPropagation(); onDelete(item); }}
                     >
                       🗑

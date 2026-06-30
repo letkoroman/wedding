@@ -9,6 +9,8 @@ export default function ProgramToggle({ view, onChange }) {
       {VIEWS.map((v) => (
         <button
           key={v.key}
+          role="tab"
+          aria-selected={view === v.key}
           className={`seg-btn ${view === v.key ? 'active' : ''}`}
           onClick={() => onChange(v.key)}
         >

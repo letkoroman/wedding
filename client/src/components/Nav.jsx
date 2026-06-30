@@ -1,10 +1,8 @@
 import './Nav.css';
 
 const TABS = [
-  { id: 'hoste', label: 'Hosté' },
   { id: 'program', label: 'Program' },
-  { id: 'ukoly', label: 'Úkoly' },
-  { id: 'ubytovani', label: 'Ubytování' }
+  { id: 'ukoly', label: 'Úkoly' }
 ];
 
 export default function Nav({ active, onChange }) {

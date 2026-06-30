@@ -9,41 +9,41 @@ function groupByCategory(ideas) {
   return groups;
 }
 
-export default function IdeaBench({ ideas, categories, onAssign, onDelete, onEdit, onReorderPreview, onReorderCommit }) {
-  if (ideas.length === 0) {
-    return (
-      <aside className="bench-section">
-        <div className="bench-header"><h3>🗂️ Lavička nápadů</h3></div>
-        <p className="bench-empty">Lavička je prázdná — nápady bez termínu se objeví zde.</p>
-      </aside>
-    );
-  }
-
+export default function IdeaBench({ ideas, categories, onAssign, onDelete, onEdit, onReorderPreview, onReorderCommit, isScheduledDragging }) {
   const groups = groupByCategory(ideas);
 
   return (
-    <aside className="bench-section">
+    <aside className={`bench-section ${isScheduledDragging ? 'scheduled-drop-active' : ''}`}>
       <div className="bench-header"><h3>🗂️ Lavička nápadů</h3></div>
-      <p className="bench-hint">
-        Nápady bez termínu, roztříděné podle kategorie a seřazené podle priority.
-        Přetáhni nahoru do programu, nebo klikni na „Zařadit". Pořadí uvnitř kategorie změníš přetažením.
-      </p>
-      <div className="bench-groups">
-        {categories
-          .filter((cat) => groups[cat.key]?.length)
-          .map((cat) => (
-            <BenchGroup
-              key={cat.key}
-              category={cat}
-              items={groups[cat.key].slice().sort((a, b) => a.priorita - b.priorita)}
-              onAssign={onAssign}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              onReorderPreview={onReorderPreview}
-              onReorderCommit={onReorderCommit}
-            />
-          ))}
-      </div>
+      {isScheduledDragging && (
+        <div className="bench-drop-hint">📥 Pusť sem — aktivita sa presunie do lavičky</div>
+      )}
+      {ideas.length === 0 ? (
+        <p className="bench-empty">Lavička je prázdná — nápady bez termínu se objeví zde.</p>
+      ) : (
+        <>
+          <p className="bench-hint">
+            Nápady bez termínu, roztříděné podle kategorie a seřazené podle priority.
+            Přetáhni nahoru do programu, nebo klikni na „Zařadit". Pořadí uvnitř kategorie změníš přetažením.
+          </p>
+          <div className="bench-groups">
+            {categories
+              .filter((cat) => groups[cat.key]?.length)
+              .map((cat) => (
+                <BenchGroup
+                  key={cat.key}
+                  category={cat}
+                  items={groups[cat.key].slice().sort((a, b) => a.priorita - b.priorita)}
+                  onAssign={onAssign}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                  onReorderPreview={onReorderPreview}
+                  onReorderCommit={onReorderCommit}
+                />
+              ))}
+          </div>
+        </>
+      )}
     </aside>
   );
 }

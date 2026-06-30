@@ -18,6 +18,7 @@ export default function AgendaPage() {
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
+  const [isScheduledDragging, setIsScheduledDragging] = useState(false);
 
   useEffect(() => {
     agendaApi.list().then(setItems);
@@ -95,6 +96,16 @@ export default function AgendaPage() {
     setPresetIdea(null);
   }
 
+  async function handleReschedule(item, newCasZacatku, newCasKonce) {
+    const updated = await agendaApi.update(item.id, { ...item, casZacatku: newCasZacatku, casKonce: newCasKonce });
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  }
+
+  async function handleUnschedule(item) {
+    const updated = await agendaApi.update(item.id, { ...item, casZacatku: null, casKonce: null });
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  }
+
   function handleDropOnProgram(e) {
     e.preventDefault();
     setIsDropActive(false);
@@ -124,7 +135,15 @@ export default function AgendaPage() {
           onDrop={handleDropOnProgram}
         >
           {view === 'overall' ? (
-            <OverallTimeline items={scheduled} categories={categories} onDelete={handleDelete} onEdit={openEdit} />
+            <OverallTimeline
+                items={scheduled}
+                categories={categories}
+                onDelete={handleDelete}
+                onEdit={openEdit}
+                onReschedule={handleReschedule}
+                onUnschedule={handleUnschedule}
+                onScheduledDragChange={setIsScheduledDragging}
+              />
           ) : (
             <CategoryLinearView items={scheduled} categories={categories} onDelete={handleDelete} onEdit={openEdit} />
           )}
@@ -137,6 +156,7 @@ export default function AgendaPage() {
           onEdit={openEdit}
           onReorderPreview={handleReorderPreview}
           onReorderCommit={handleReorderCommit}
+          isScheduledDragging={isScheduledDragging}
         />
       </div>
 

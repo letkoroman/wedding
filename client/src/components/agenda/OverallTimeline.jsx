@@ -1,260 +1,132 @@
-import { useEffect, useRef, useState } from 'react';
-import { layoutOverall, clusterOverall } from './layout.js';
-import { minutesToLabel } from './timeUtils.js';
+import { toMinutes, minutesToLabel, fmtDuration } from './timeUtils.js';
 import { deriveColors } from './colors.js';
-
-const PX_PER_MIN = 1.7;
-const MIN_BLOCK_PX = 60;
-const LABEL_COL_WIDTH = 160; // width of Gantt block-name column
 
 function getCategory(categories, key) {
   return categories.find((c) => c.key === key) || categories[0] || { icon: '', label: key, accent: '#999' };
 }
 
-// 768px breakpoint: Gantt layout on desktop, header strips on mobile
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const handler = () => setIsMobile(mq.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return isMobile;
+// Group items into time-overlap clusters, preserving block info for display
+function buildSections(items, blocks) {
+  const sorted = [...items]
+    .map((i) => ({ ...i, startMin: toMinutes(i.casZacatku), endMin: toMinutes(i.casKonce) }))
+    .sort((a, b) => a.startMin - b.startMin);
+
+  const clusters = [];
+  let group = [sorted[0]];
+  let groupEnd = sorted[0].endMin;
+
+  for (let i = 1; i < sorted.length; i++) {
+    const item = sorted[i];
+    if (item.startMin < groupEnd) {
+      group.push(item);
+      groupEnd = Math.max(groupEnd, item.endMin);
+    } else {
+      clusters.push(group);
+      group = [item];
+      groupEnd = item.endMin;
+    }
+  }
+  clusters.push(group);
+
+  return clusters.map((clusterItems) => {
+    const startMin = clusterItems[0].startMin;
+    const endMin = Math.max(...clusterItems.map((i) => i.endMin));
+    const blockIds = [...new Set(clusterItems.map((i) => i.blockId).filter(Boolean))];
+    const sharedBlock = blockIds.length === 1 ? blocks.find((b) => b.id === blockIds[0]) : null;
+    return { startMin, endMin, block: sharedBlock, rows: buildRows(clusterItems) };
+  });
 }
 
-export default function OverallTimeline({ items, categories, blocks = [], onDelete, onEdit, onReschedule, onUnschedule, onScheduledDragChange }) {
-  const isMobile = useIsMobile();
+// Within a cluster, split into sequential rows; overlapping items → parallel row
+function buildRows(items) {
+  const sorted = [...items].sort((a, b) => a.startMin - b.startMin);
+  const rows = [];
+  let i = 0;
+  while (i < sorted.length) {
+    const group = [sorted[i]];
+    let j = i + 1;
+    while (j < sorted.length) {
+      const gEnd = Math.max(...group.map((g) => g.endMin));
+      if (sorted[j].startMin < gEnd) { group.push(sorted[j]); j++; } else break;
+    }
+    rows.push(group.length === 1 ? { type: 'single', item: group[0] } : { type: 'parallel', items: group });
+    i = j;
+  }
+  return rows;
+}
 
-  if (items.length === 0) {
+export default function OverallTimeline({ items, categories, blocks = [], onDelete, onEdit }) {
+  if (!items.length) {
     return <p className="empty-state">Zatím žádné naplánované aktivity.</p>;
   }
-
-  const laid = layoutOverall(items);
-
-  if (isMobile) {
-    return <MobileClusters laid={laid} categories={categories} blocks={blocks} onDelete={onDelete} onEdit={onEdit} />;
-  }
+  const sections = buildSections(items, blocks);
   return (
-    <DesktopTimeline
-      laid={laid}
-      categories={categories}
-      blocks={blocks}
-      onDelete={onDelete}
-      onEdit={onEdit}
-      onReschedule={onReschedule}
-      onUnschedule={onUnschedule}
-      onScheduledDragChange={onScheduledDragChange}
-    />
+    <div className="grouped-agenda">
+      {sections.map((section, idx) => (
+        <AgendaSection
+          key={idx}
+          section={section}
+          categories={categories}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isLast={idx === sections.length - 1}
+        />
+      ))}
+    </div>
   );
 }
 
-function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onReschedule, onUnschedule, onScheduledDragChange }) {
-  const axisStart = Math.floor(Math.min(...laid.map((i) => i.startMin)) / 60) * 60;
-  const axisEnd = Math.ceil(Math.max(...laid.map((i) => i.endMin)) / 60) * 60;
-  const totalHeight = (axisEnd - axisStart) * PX_PER_MIN;
-  const hourLabels = [];
-  for (let m = axisStart; m <= axisEnd; m += 60) hourLabels.push(m);
-
-  const dragRef = useRef(null);
-  const [preview, setPreview] = useState({ itemId: null, deltaMin: 0 });
-
-  // Re-attach every render so closures capture fresh laid/axis/callbacks
-  useEffect(() => {
-    function onPointerMove(e) {
-      if (!dragRef.current) return;
-      const { startPointerY, origStartMin, duration } = dragRef.current;
-      const rawDelta = (e.clientY - startPointerY) / PX_PER_MIN;
-      const snapped = Math.round(rawDelta / 15) * 15;
-      const constrained = Math.max(axisStart - origStartMin, Math.min(axisEnd - duration - origStartMin, snapped));
-      setPreview({ itemId: dragRef.current.itemId, deltaMin: constrained });
-    }
-
-    function onPointerUp(e) {
-      if (!dragRef.current) return;
-      const { itemId, origStartMin, duration, startPointerY } = dragRef.current;
-      dragRef.current = null;
-      const rawDelta = (e.clientY - startPointerY) / PX_PER_MIN;
-      const snapped = Math.round(rawDelta / 15) * 15;
-      const constrained = Math.max(axisStart - origStartMin, Math.min(axisEnd - duration - origStartMin, snapped));
-      setPreview({ itemId: null, deltaMin: 0 });
-      onScheduledDragChange?.(false);
-
-      const item = laid.find((i) => i.id === itemId);
-      if (!item) return;
-
-      // Check bench drop first — works even when vertical delta < 15 min (horizontal drag)
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (el?.closest('.bench-section')) {
-        onUnschedule?.(item);
-        return;
-      }
-
-      if (Math.abs(constrained) >= 15) {
-        const newStart = origStartMin + constrained;
-        const newEnd = newStart + duration;
-        onReschedule?.(item, minutesToLabel(newStart), minutesToLabel(newEnd));
-      } else {
-        onEdit(item);
-      }
-    }
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-    };
-  }); // no dep array — intentionally fresh closures every render
-
-  function startDrag(e, item) {
-    if (e.target.closest('.block-delete')) return;
-    if (item.endMin < item.startMin) { onEdit(item); return; }
-    e.preventDefault();
-    dragRef.current = {
-      itemId: item.id,
-      startPointerY: e.clientY,
-      origStartMin: item.startMin,
-      duration: item.endMin - item.startMin
-    };
-    setPreview({ itemId: item.id, deltaMin: 0 });
-    onScheduledDragChange?.(true);
-  }
-
-  // Build Gantt swimlanes: one entry per block that has items in the current filtered set
-  const swimlanes = blocks
-    .map((block) => {
-      const blockItems = laid.filter((i) => i.blockId === block.id);
-      if (!blockItems.length) return null;
-      return {
-        block,
-        minStart: Math.min(...blockItems.map((i) => i.startMin)),
-        maxEnd: Math.max(...blockItems.map((i) => i.endMin)),
-      };
-    })
-    .filter(Boolean);
-
-  const hasBlockedItems = swimlanes.length > 0;
-  // When Gantt column is active the blocks-layer shifts right past it
-  const blocksLayerLeft = hasBlockedItems ? 56 + LABEL_COL_WIDTH : 56;
-
+function AgendaSection({ section, categories, onDelete, onEdit, isLast }) {
   return (
-    <div className="timeline-card">
-      <div className="timeline" style={{ height: totalHeight + 24 }}>
-        {/* Hour grid lines */}
-        {hourLabels.map((m) => (
-          <div key={m} className="hour-line" style={{ top: (m - axisStart) * PX_PER_MIN }}>
-            <span className="hour-label">{minutesToLabel(m)}</span>
-          </div>
-        ))}
-
-        {/* Full-width separator line at the bottom of each block's time range */}
-        {swimlanes.map(({ block, maxEnd }) => (
+    <div className={`agenda-section${isLast ? ' is-last' : ''}`}>
+      <div className="as-time-col">
+        <div className="as-time-start">{minutesToLabel(section.startMin)}</div>
+        <div className="as-time-end">– {minutesToLabel(section.endMin)}</div>
+        {section.block && (
           <div
-            key={`sep-${block.id}`}
-            className="block-separator"
-            style={{ top: (maxEnd - axisStart) * PX_PER_MIN }}
-          />
-        ))}
-
-        {/* Gantt label column — left side, spans each block's time range */}
-        {hasBlockedItems && (
-          <div className="block-labels-layer">
-            {swimlanes.map(({ block, minStart, maxEnd }) => {
-              const top = (minStart - axisStart) * PX_PER_MIN;
-              const height = Math.max((maxEnd - minStart) * PX_PER_MIN, 40);
-              return (
-                <div
-                  key={block.id}
-                  className="block-label-cell"
-                  style={{
-                    top,
-                    height,
-                    background: block.barva + '18',
-                    borderLeft: `3px solid ${block.barva}`,
-                    color: block.barva,
-                  }}
-                >
-                  <span className="block-label-text">{block.nazev}</span>
-                </div>
-              );
-            })}
+            className="as-block-badge"
+            style={{ color: section.block.barva, borderColor: section.block.barva + '70', background: section.block.barva + '14' }}
+          >
+            {section.block.nazev}
           </div>
         )}
-
-        {/* Activity blocks — offset right when Gantt column is present */}
-        <div className="blocks-layer" style={{ left: blocksLayerLeft }}>
-          {laid.map((item) => {
-            const cat = getCategory(categories, item.kategorie);
-            const c = deriveColors(cat.accent);
-            const isDragging = preview.itemId === item.id;
-            const effectiveStartMin = item.startMin + (isDragging ? preview.deltaMin : 0);
-            const top = (effectiveStartMin - axisStart) * PX_PER_MIN;
-            const height = Math.max(MIN_BLOCK_PX, (item.endMin - item.startMin) * PX_PER_MIN);
-            const leftPct = (item.col / item.maxCols) * 100;
-            const widthPct = (1 / item.maxCols) * 100;
-            const displayStart = isDragging ? minutesToLabel(effectiveStartMin) : item.casZacatku;
-            const displayEnd = isDragging ? minutesToLabel(item.endMin + preview.deltaMin) : item.casKonce;
-            const showDesc = Boolean(item.poznamka) && height > 82;
-            return (
-              <div
-                key={item.id}
-                className={`block ${isDragging ? 'dragging' : ''}`}
-                style={{
-                  top,
-                  height,
-                  left: `calc(${leftPct}% + 2px)`,
-                  width: `calc(${widthPct}% - 4px)`,
-                  background: c.bg,
-                  borderLeftColor: c.border,
-                  color: c.text
-                }}
-                title={`${item.nazev} — ťahaním zmeníš čas, pust na lavičku pre odplánování`}
-                onPointerDown={(e) => startDrag(e, item)}
-              >
-                <button
-                  type="button"
-                  className="block-delete"
-                  title="Smazat aktivitu"
-                  aria-label="Smazat aktivitu"
-                  onClick={(e) => { e.stopPropagation(); onDelete(item); }}
-                >
-                  🗑
-                </button>
-                <span className="b-cat">{cat.icon} {cat.label}</span>
-                <span className="b-name">{item.nazev}</span>
-                <span className="b-time">{displayStart}–{displayEnd}</span>
-                {item.misto && <span className="b-loc">📍 {item.misto}</span>}
-                {showDesc && <span className="b-desc">{item.poznamka}</span>}
-              </div>
-            );
-          })}
-        </div>
+      </div>
+      <div className="as-content">
+        {section.rows.map((row, idx) =>
+          row.type === 'single' ? (
+            <ActivityRow key={idx} item={row.item} categories={categories} onDelete={onDelete} onEdit={onEdit} />
+          ) : (
+            <ParallelGroup key={idx} items={row.items} categories={categories} onDelete={onDelete} onEdit={onEdit} />
+          )
+        )}
       </div>
     </div>
   );
 }
 
-function MiniRow({ item, categories, showTime, onDelete, onEdit }) {
+function ActivityRow({ item, categories, onDelete, onEdit, inLane = false }) {
   const cat = getCategory(categories, item.kategorie);
   const c = deriveColors(cat.accent);
+  const duration = fmtDuration(item.casZacatku, item.casKonce);
+
   return (
     <div
-      className="cluster-mini"
-      style={{ background: c.bg, borderLeftColor: c.border, color: c.text }}
+      className={`activity-row${inLane ? ' in-lane' : ''}`}
+      style={{ borderLeftColor: c.border, background: c.bg, color: c.text }}
       onClick={() => onEdit(item)}
     >
-      <div className="cm-body">
-        <span className="cm-cat">{cat.icon} {cat.label}</span>
-        <span className="cm-name">{item.nazev}{item.misto ? ` · 📍 ${item.misto}` : ''}</span>
-        {item.poznamka && <span className="cm-desc">{item.poznamka}</span>}
+      <div className="ar-body">
+        <div className="ar-meta">
+          <span className="ar-cat">{cat.icon} {cat.label}</span>
+          {duration && <span className="ar-dur">{duration}</span>}
+        </div>
+        <div className="ar-name">{item.nazev}</div>
+        {!inLane && item.misto && <div className="ar-loc">📍 {item.misto}</div>}
+        {item.poznamka && <div className="ar-desc">{item.poznamka}</div>}
       </div>
-      {showTime && <span className="cm-time">{item.casZacatku}–{item.casKonce}</span>}
       <button
         type="button"
-        className="cm-delete"
+        className="ar-del"
         title="Smazat aktivitu"
         aria-label="Smazat aktivitu"
         onClick={(e) => { e.stopPropagation(); onDelete(item); }}
@@ -265,61 +137,24 @@ function MiniRow({ item, categories, showTime, onDelete, onEdit }) {
   );
 }
 
-function MobileClusters({ laid, categories, blocks, onDelete, onEdit }) {
-  const clusters = clusterOverall(laid);
+function ParallelGroup({ items, categories, onDelete, onEdit }) {
   return (
-    <div className="mobile-clusters">
-      {clusters.map((cluster, idx) => (
-        <ClusterCard
-          key={idx}
-          cluster={cluster}
-          isSingle={cluster.items.length === 1}
-          categories={categories}
-          blocks={blocks}
-          onDelete={onDelete}
-          onEdit={onEdit}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ClusterCard({ cluster, isSingle, categories, blocks, onDelete, onEdit }) {
-  const [expanded, setExpanded] = useState(false);
-  const involvedIcons = [...new Set(cluster.items.map((i) => getCategory(categories, i.kategorie).icon))].join(' ');
-
-  const blockIds = [...new Set(cluster.items.map((i) => i.blockId).filter(Boolean))];
-  const sharedBlock = blockIds.length === 1 ? blocks.find((b) => b.id === blockIds[0]) : null;
-
-  return (
-    <div className={`cluster-card ${isSingle ? 'single' : ''} ${expanded ? 'expanded' : ''}`}>
-      {sharedBlock && (
-        <div
-          className="mobile-block-label"
-          style={{ borderLeftColor: sharedBlock.barva, color: sharedBlock.barva, background: sharedBlock.barva + '18' }}
-        >
-          {sharedBlock.nazev}
-        </div>
-      )}
-      <div className="cluster-summary" onClick={() => !isSingle && setExpanded((e) => !e)}>
-        <span className="cs-time">{minutesToLabel(cluster.minStart)}–{minutesToLabel(cluster.maxEnd)}</span>
-        <span className="cs-icons">{involvedIcons}</span>
-        {!isSingle && (
-          <>
-            <span className="cs-count">{cluster.items.length} aktivity souběžně</span>
-            <span className="cs-caret">▾</span>
-          </>
-        )}
+    <div className="parallel-group">
+      <div className="pg-lanes">
+        {items.map((item) => {
+          const cat = getCategory(categories, item.kategorie);
+          const c = deriveColors(cat.accent);
+          const laneLabel = item.misto || `${cat.icon} ${cat.label}`;
+          return (
+            <div key={item.id} className="pg-lane">
+              <div className="pg-lane-head" style={{ color: c.border, borderBottomColor: c.border + '50', background: c.border + '0f' }}>
+                {item.misto ? `📍 ${item.misto}` : laneLabel}
+              </div>
+              <ActivityRow item={item} categories={categories} onDelete={onDelete} onEdit={onEdit} inLane />
+            </div>
+          );
+        })}
       </div>
-      {isSingle ? (
-        <MiniRow item={cluster.items[0]} categories={categories} showTime={false} onDelete={onDelete} onEdit={onEdit} />
-      ) : (
-        <div className="cluster-items">
-          {[...cluster.items].sort((a, b) => a.startMin - b.startMin).map((item) => (
-            <MiniRow key={item.id} item={item} categories={categories} showTime onDelete={onDelete} onEdit={onEdit} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

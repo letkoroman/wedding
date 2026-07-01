@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { agendaApi, categoriesApi, blocksApi } from '../../api.js';
-import CategoryLegend from './CategoryLegend.jsx';
 import OverallTimeline from './OverallTimeline.jsx';
 import IdeaBench from './IdeaBench.jsx';
 import AgendaForm from './AgendaForm.jsx';
@@ -19,7 +18,6 @@ export default function AgendaPage() {
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
-  const [isScheduledDragging, setIsScheduledDragging] = useState(false);
 
   useEffect(() => {
     agendaApi.list().then(setItems);
@@ -70,6 +68,7 @@ export default function AgendaPage() {
     try {
       await categoriesApi.remove(key);
       setCategories((prev) => prev.filter((c) => c.key !== key));
+      if (filterCat === key) setFilterCat(null);
     } catch {
       alert('Nejprve přesuňte nebo smažte aktivity v této kategorii.');
     }
@@ -112,16 +111,6 @@ export default function AgendaPage() {
     setPresetIdea(null);
   }
 
-  async function handleReschedule(item, newCasZacatku, newCasKonce) {
-    const updated = await agendaApi.update(item.id, { ...item, casZacatku: newCasZacatku, casKonce: newCasKonce });
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-  }
-
-  async function handleUnschedule(item) {
-    const updated = await agendaApi.update(item.id, { ...item, casZacatku: null, casKonce: null });
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-  }
-
   function handleDropOnProgram(e) {
     e.preventDefault();
     setIsDropActive(false);
@@ -132,19 +121,20 @@ export default function AgendaPage() {
 
   return (
     <div>
+      {/* ─── Header: title + editing actions ─── */}
       <div className="page-header">
         <h2>Program svatebního dne</h2>
         <div className="page-actions">
           <button className="btn" onClick={openAddSchedule}>+ Přidat aktivitu</button>
-          <button className="btn btn-outline" onClick={() => setShowCategoryForm(true)}>+ Nová kategorie</button>
-          <button className="btn btn-outline" onClick={() => setShowBlockForm(true)}>+ Nový blok</button>
+          <button className="btn btn-outline" onClick={() => setShowCategoryForm(true)}>+ Kategorie</button>
+          <button className="btn btn-outline" onClick={() => setShowBlockForm(true)}>+ Blok</button>
         </div>
       </div>
 
-      <CategoryLegend categories={categories} onDelete={handleDeleteCategory} />
-
+      {/* ─── Block management (admin row, separate from filter) ─── */}
       {blocks.length > 0 && (
-        <div className="block-legend">
+        <div className="mgmt-row">
+          <span className="mgmt-label">Bloky:</span>
           {blocks.map((block) => (
             <span
               key={block.id}
@@ -165,34 +155,50 @@ export default function AgendaPage() {
         </div>
       )}
 
-      <div className="pill-row" role="group" aria-label="Filtr podle kategorie">
-        <button
-          className={`pill ${!filterCat ? 'active' : ''}`}
-          style={!filterCat ? { background: '#4a3f3a' } : undefined}
-          aria-pressed={!filterCat}
-          onClick={() => setFilterCat(null)}
-        >
-          Vše
-        </button>
-        {categories.map((cat) => {
-          const isActive = filterCat === cat.key;
-          return (
-            <button
-              key={cat.key}
-              className={`pill ${isActive ? 'active' : ''}`}
-              style={isActive ? { background: cat.accent } : undefined}
-              aria-pressed={isActive}
-              onClick={() => setFilterCat(isActive ? null : cat.key)}
-            >
-              {cat.icon} {cat.label}
-            </button>
-          );
-        })}
+      {/* ─── Single filter row ─── */}
+      <div className="filter-section">
+        <span className="filter-label">Zobrazit:</span>
+        <div className="pill-row" role="group" aria-label="Filtr podle kategorie">
+          <button
+            className={`pill${!filterCat ? ' active' : ''}`}
+            style={!filterCat ? { background: 'var(--color-text)', borderColor: 'var(--color-text)' } : undefined}
+            aria-pressed={!filterCat}
+            onClick={() => setFilterCat(null)}
+          >
+            Vše
+          </button>
+          {categories.map((cat) => {
+            const isActive = filterCat === cat.key;
+            return (
+              <span key={cat.key} className="pill-wrap">
+                <button
+                  className={`pill${isActive ? ' active' : ''}`}
+                  style={isActive ? { background: cat.accent, borderColor: cat.accent } : undefined}
+                  aria-pressed={isActive}
+                  onClick={() => setFilterCat(isActive ? null : cat.key)}
+                >
+                  {cat.icon} {cat.label}
+                </button>
+                {!cat.fixed && (
+                  <button
+                    type="button"
+                    className="pill-x"
+                    aria-label={`Smazat kategorii ${cat.label}`}
+                    onClick={() => handleDeleteCategory(cat.key)}
+                  >
+                    ✕
+                  </button>
+                )}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="page-layout">
+      {/* ─── Main two-column layout ─── */}
+      <div className={`page-layout${ideas.length === 0 ? ' bench-empty' : ''}`}>
         <div
-          className={`page-main ${isDropActive ? 'drop-target-active' : ''}`}
+          className={`page-main${isDropActive ? ' drop-target-active' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setIsDropActive(true); }}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setIsDropActive(false); }}
           onDrop={handleDropOnProgram}
@@ -203,21 +209,25 @@ export default function AgendaPage() {
             blocks={blocks}
             onDelete={handleDelete}
             onEdit={openEdit}
-            onReschedule={handleReschedule}
-            onUnschedule={handleUnschedule}
-            onScheduledDragChange={setIsScheduledDragging}
           />
         </div>
-        <IdeaBench
-          ideas={ideas}
-          categories={categories}
-          onAssign={openAssignIdea}
-          onDelete={handleDelete}
-          onEdit={openEdit}
-          onReorderPreview={handleReorderPreview}
-          onReorderCommit={handleReorderCommit}
-          isScheduledDragging={isScheduledDragging}
-        />
+
+        {ideas.length === 0 ? (
+          <div className="bench-rail-empty" aria-label="Lavička nápadů je prázdná">
+            <span role="img" aria-hidden="true">🗂️</span>
+            <small>Lavička prázdná</small>
+          </div>
+        ) : (
+          <IdeaBench
+            ideas={ideas}
+            categories={categories}
+            onAssign={openAssignIdea}
+            onDelete={handleDelete}
+            onEdit={openEdit}
+            onReorderPreview={handleReorderPreview}
+            onReorderCommit={handleReorderCommit}
+          />
+        )}
       </div>
 
       {showForm && (

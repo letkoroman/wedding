@@ -60,27 +60,40 @@
 }
 .block-delete:hover { opacity: 1; background: var(--color-danger, #b3493f); color: #fff; }
 
-/* ─── Swimlane block bands (desktop timeline) ─── */
-.swimlane-bg {
+/* ─── Gantt block label column (desktop ≥768px) ─── */
+.block-labels-layer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 56px; /* sits directly after hour-label area */
+  width: 160px;
+}
+.block-label-cell {
   position: absolute;
   left: 0;
   right: 0;
-  border-radius: 6px;
-  border-left: 3px solid;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  overflow: hidden;
+  border-right: 1px solid rgba(0,0,0,0.07);
 }
-.swimlane-label {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 9px;
+.block-label-text {
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  white-space: nowrap;
-  opacity: 0.92;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.block-separator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0,0,0,0.09);
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* ─── Block legend row ─── */
@@ -211,7 +224,7 @@
   .page-layout { grid-template-columns: 1fr; }
   .bench-section { position: static; margin-top: 24px; }
 }
-@media (max-width: 680px) {
+@media (max-width: 767px) {
   .form-row-pair { grid-template-columns: 1fr; }
   .time-field-pair { flex-direction: column; }
 }

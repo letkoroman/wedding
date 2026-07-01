@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { layoutOverall, clusterOverall } from './layout.js';
-import { minutesToLabel, fmtDuration } from './timeUtils.js';
+import { minutesToLabel } from './timeUtils.js';
 import { deriveColors } from './colors.js';
 
 const PX_PER_MIN = 1.7;
 const MIN_BLOCK_PX = 60;
+const LABEL_COL_WIDTH = 160; // width of Gantt block-name column
 
 function getCategory(categories, key) {
   return categories.find((c) => c.key === key) || categories[0] || { icon: '', label: key, accent: '#999' };
 }
 
+// 768px breakpoint: Gantt layout on desktop, header strips on mobile
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 680px)').matches
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
   );
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 680px)');
+    const mq = window.matchMedia('(max-width: 767px)');
     const handler = () => setIsMobile(mq.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
@@ -59,7 +61,7 @@ function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onResched
   const dragRef = useRef(null);
   const [preview, setPreview] = useState({ itemId: null, deltaMin: 0 });
 
-  // Re-attach every render so closures always have fresh laid/axis values
+  // Re-attach every render so closures capture fresh laid/axis/callbacks
   useEffect(() => {
     function onPointerMove(e) {
       if (!dragRef.current) return;
@@ -83,7 +85,7 @@ function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onResched
       const item = laid.find((i) => i.id === itemId);
       if (!item) return;
 
-      // Check bench drop first — user may drag sideways without vertical movement
+      // Check bench drop first — works even when vertical delta < 15 min (horizontal drag)
       const el = document.elementFromPoint(e.clientX, e.clientY);
       if (el?.closest('.bench-section')) {
         onUnschedule?.(item);
@@ -105,7 +107,7 @@ function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onResched
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
     };
-  }); // intentionally no dep array — fresh closures every render
+  }); // no dep array — intentionally fresh closures every render
 
   function startDrag(e, item) {
     if (e.target.closest('.block-delete')) return;
@@ -121,7 +123,7 @@ function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onResched
     onScheduledDragChange?.(true);
   }
 
-  // Compute swimlane bands for blocks that have items in the current laid set
+  // Build Gantt swimlanes: one entry per block that has items in the current filtered set
   const swimlanes = blocks
     .map((block) => {
       const blockItems = laid.filter((i) => i.blockId === block.id);
@@ -134,33 +136,56 @@ function DesktopTimeline({ laid, categories, blocks, onDelete, onEdit, onResched
     })
     .filter(Boolean);
 
+  const hasBlockedItems = swimlanes.length > 0;
+  // When Gantt column is active the blocks-layer shifts right past it
+  const blocksLayerLeft = hasBlockedItems ? 56 + LABEL_COL_WIDTH : 56;
+
   return (
     <div className="timeline-card">
       <div className="timeline" style={{ height: totalHeight + 24 }}>
+        {/* Hour grid lines */}
         {hourLabels.map((m) => (
           <div key={m} className="hour-line" style={{ top: (m - axisStart) * PX_PER_MIN }}>
             <span className="hour-label">{minutesToLabel(m)}</span>
           </div>
         ))}
-        <div className="blocks-layer">
-          {/* Swimlane backgrounds — rendered before activity blocks so they sit behind */}
-          {swimlanes.map(({ block, minStart, maxEnd }) => (
-            <div
-              key={block.id}
-              className="swimlane-bg"
-              style={{
-                top: (minStart - axisStart) * PX_PER_MIN - 4,
-                height: Math.max((maxEnd - minStart) * PX_PER_MIN + 8, 48),
-                borderLeftColor: block.barva,
-                background: block.barva + '18',
-              }}
-            >
-              <div className="swimlane-label" style={{ color: block.barva, background: block.barva + '28' }}>
-                {block.nazev}
-              </div>
-            </div>
-          ))}
 
+        {/* Full-width separator line at the bottom of each block's time range */}
+        {swimlanes.map(({ block, maxEnd }) => (
+          <div
+            key={`sep-${block.id}`}
+            className="block-separator"
+            style={{ top: (maxEnd - axisStart) * PX_PER_MIN }}
+          />
+        ))}
+
+        {/* Gantt label column — left side, spans each block's time range */}
+        {hasBlockedItems && (
+          <div className="block-labels-layer">
+            {swimlanes.map(({ block, minStart, maxEnd }) => {
+              const top = (minStart - axisStart) * PX_PER_MIN;
+              const height = Math.max((maxEnd - minStart) * PX_PER_MIN, 40);
+              return (
+                <div
+                  key={block.id}
+                  className="block-label-cell"
+                  style={{
+                    top,
+                    height,
+                    background: block.barva + '18',
+                    borderLeft: `3px solid ${block.barva}`,
+                    color: block.barva,
+                  }}
+                >
+                  <span className="block-label-text">{block.nazev}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Activity blocks — offset right when Gantt column is present */}
+        <div className="blocks-layer" style={{ left: blocksLayerLeft }}>
           {laid.map((item) => {
             const cat = getCategory(categories, item.kategorie);
             const c = deriveColors(cat.accent);
@@ -263,14 +288,16 @@ function ClusterCard({ cluster, isSingle, categories, blocks, onDelete, onEdit }
   const [expanded, setExpanded] = useState(false);
   const involvedIcons = [...new Set(cluster.items.map((i) => getCategory(categories, i.kategorie).icon))].join(' ');
 
-  // Determine if all items in this cluster share the same block
   const blockIds = [...new Set(cluster.items.map((i) => i.blockId).filter(Boolean))];
   const sharedBlock = blockIds.length === 1 ? blocks.find((b) => b.id === blockIds[0]) : null;
 
   return (
     <div className={`cluster-card ${isSingle ? 'single' : ''} ${expanded ? 'expanded' : ''}`}>
       {sharedBlock && (
-        <div className="mobile-block-label" style={{ borderLeftColor: sharedBlock.barva, color: sharedBlock.barva, background: sharedBlock.barva + '18' }}>
+        <div
+          className="mobile-block-label"
+          style={{ borderLeftColor: sharedBlock.barva, color: sharedBlock.barva, background: sharedBlock.barva + '18' }}
+        >
           {sharedBlock.nazev}
         </div>
       )}

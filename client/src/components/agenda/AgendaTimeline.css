@@ -81,6 +81,62 @@
 .bench-rail-empty span { font-size: 20px; opacity: 0.45; }
 .bench-rail-empty small { opacity: 0.6; }
 
+/* ─── Block chip edit button ─── */
+.chip-label-btn {
+  border: none; background: transparent; color: inherit; font: inherit;
+  font-weight: 700; font-size: 12px; cursor: pointer; padding: 0;
+  text-decoration: underline dotted;
+}
+.chip-label-btn:hover { opacity: 0.75; }
+
+/* ─── Block group + block header ─── */
+.block-group { display: contents; }
+.block-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 18px 9px 14px; border-left: 4px solid; border-bottom: 1px solid var(--color-border);
+}
+.bh-name {
+  font-family: var(--font-heading); font-size: 15px; font-weight: 700; letter-spacing: 0.2px;
+}
+.bh-time { font-size: 12px; color: var(--color-text-light); font-weight: 600; }
+
+/* Slight indent for sections belonging to a block */
+.agenda-section.in-block .as-time-col { background: #f7f4f0; }
+
+/* ─── Gap row (time axis indicator) ─── */
+.agenda-gap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 18px; border-bottom: 1px solid var(--color-border);
+  background: #faf8f5;
+}
+.agenda-gap.compact { padding: 6px 18px; }
+.gap-label {
+  font-size: 10.5px; color: var(--color-text-light); letter-spacing: 0.5px;
+  font-style: italic; white-space: nowrap;
+}
+
+/* ─── Bench add button ─── */
+.bench-add-btn {
+  border: 1px solid var(--color-border); background: #fff; border-radius: 999px;
+  padding: 5px 12px; font-size: 12px; font-weight: 700; color: var(--color-text-light);
+  cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+.bench-add-btn:hover { background: var(--color-rose); color: #fff; border-color: var(--color-rose); }
+
+/* ─── Activity row time display ─── */
+.ar-time {
+  font-size: 11.5px; font-weight: 800; opacity: 0.85; font-family: var(--font-heading);
+  white-space: nowrap;
+}
+
+/* ─── Scheduled-drop bench highlight ─── */
+.bench-section.scheduled-drop-active { outline: 2px dashed var(--color-rose); background: #fdf3ee; }
+.bench-drop-hint {
+  border: 1.5px dashed var(--color-rose); border-radius: var(--radius);
+  padding: 8px 12px; text-align: center; font-size: 12px; font-style: italic;
+  color: var(--color-rose); margin-bottom: 10px;
+}
+
 /* ─── Grouped agenda ─── */
 .grouped-agenda {
   background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);

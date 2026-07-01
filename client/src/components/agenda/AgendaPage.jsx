@@ -14,8 +14,10 @@ export default function AgendaPage() {
   const [filterCat, setFilterCat] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [presetIdea, setPresetIdea] = useState(null);
+  const [formInitialMode, setFormInitialMode] = useState('schedule');
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingBlock, setEditingBlock] = useState(null); // null = create, block obj = edit
   const [showBlockForm, setShowBlockForm] = useState(false);
   const [isDropActive, setIsDropActive] = useState(false);
 
@@ -46,11 +48,17 @@ export default function AgendaPage() {
     setItems((prev) => prev.filter((i) => i.id !== item.id));
   }
 
+  async function handleUnschedule(itemId) {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    const updated = await agendaApi.update(item.id, { ...item, casZacatku: null, casKonce: null });
+    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  }
+
   function handleReorderPreview(reorderedGroup) {
     setItems((prev) => {
       const ids = new Set(reorderedGroup.map((i) => i.id));
-      const others = prev.filter((i) => !ids.has(i.id));
-      return [...others, ...reorderedGroup];
+      return [...prev.filter((i) => !ids.has(i.id)), ...reorderedGroup];
     });
   }
 
@@ -65,23 +73,39 @@ export default function AgendaPage() {
   }
 
   async function handleDeleteCategory(key) {
-    try {
-      await categoriesApi.remove(key);
-      setCategories((prev) => prev.filter((c) => c.key !== key));
-      if (filterCat === key) setFilterCat(null);
-    } catch {
-      alert('Nejprve přesuňte nebo smažte aktivity v této kategorii.');
-    }
+    const cat = categories.find((c) => c.key === key);
+    const count = items.filter((i) => i.kategorie === key).length;
+    const msg = count > 0
+      ? `Smazat kategorii „${cat?.label}"? ${count} aktivit${count === 1 ? 'a' : ''} zůstan${count === 1 ? 'e' : 'ou'} v programu bez kategorie.`
+      : `Smazat kategorii „${cat?.label}"?`;
+    if (!window.confirm(msg)) return;
+    await categoriesApi.remove(key);
+    setCategories((prev) => prev.filter((c) => c.key !== key));
+    setItems((prev) => prev.map((i) => i.kategorie === key ? { ...i, kategorie: null } : i));
+    if (filterCat === key) setFilterCat(null);
   }
 
   async function handleCreateBlock(data) {
     const created = await blocksApi.create(data);
     setBlocks((prev) => [...prev, created]);
     setShowBlockForm(false);
+    setEditingBlock(null);
+  }
+
+  async function handleUpdateBlock(data) {
+    const updated = await blocksApi.update(editingBlock.id, data);
+    setBlocks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+    setShowBlockForm(false);
+    setEditingBlock(null);
   }
 
   async function handleDeleteBlock(id) {
-    if (!window.confirm('Smazat blok programu? Aktivity zůstanou, jen se odřadí z bloku.')) return;
+    const block = blocks.find((b) => b.id === id);
+    const count = items.filter((i) => i.blockId === id).length;
+    const msg = count > 0
+      ? `Smazat blok „${block?.nazev}"? ${count} aktivit${count === 1 ? 'a' : ''} zůstan${count === 1 ? 'e' : 'ou'} v programu bez bloku.`
+      : `Smazat blok „${block?.nazev}"?`;
+    if (!window.confirm(msg)) return;
     await blocksApi.remove(id);
     setItems((prev) => prev.map((i) => (i.blockId === id ? { ...i, blockId: null } : i)));
     setBlocks((prev) => prev.filter((b) => b.id !== id));
@@ -90,18 +114,28 @@ export default function AgendaPage() {
   function openEdit(item) {
     setEditingItem(item);
     setPresetIdea(null);
+    setFormInitialMode(item.casZacatku ? 'schedule' : 'idea');
     setShowForm(true);
   }
 
   function openAddSchedule() {
     setEditingItem(null);
     setPresetIdea(null);
+    setFormInitialMode('schedule');
+    setShowForm(true);
+  }
+
+  function openAddIdea() {
+    setEditingItem(null);
+    setPresetIdea(null);
+    setFormInitialMode('idea');
     setShowForm(true);
   }
 
   function openAssignIdea(idea) {
     setEditingItem(idea);
     setPresetIdea(idea);
+    setFormInitialMode('schedule');
     setShowForm(true);
   }
 
@@ -111,9 +145,21 @@ export default function AgendaPage() {
     setPresetIdea(null);
   }
 
+  function openNewBlock() {
+    setEditingBlock(null);
+    setShowBlockForm(true);
+  }
+
+  function openEditBlock(block) {
+    setEditingBlock(block);
+    setShowBlockForm(true);
+  }
+
   function handleDropOnProgram(e) {
     e.preventDefault();
     setIsDropActive(false);
+    const type = e.dataTransfer.getData('text/x-type');
+    if (type === 'scheduled') return; // ignore — already handled by bench drop
     const id = e.dataTransfer.getData('text/plain');
     const idea = ideas.find((i) => i.id === id);
     if (idea) openAssignIdea(idea);
@@ -127,11 +173,11 @@ export default function AgendaPage() {
         <div className="page-actions">
           <button className="btn" onClick={openAddSchedule}>+ Přidat aktivitu</button>
           <button className="btn btn-outline" onClick={() => setShowCategoryForm(true)}>+ Kategorie</button>
-          <button className="btn btn-outline" onClick={() => setShowBlockForm(true)}>+ Blok</button>
+          <button className="btn btn-outline" onClick={openNewBlock}>+ Blok</button>
         </div>
       </div>
 
-      {/* ─── Block management (admin row, separate from filter) ─── */}
+      {/* ─── Block management (separate from filter) ─── */}
       {blocks.length > 0 && (
         <div className="mgmt-row">
           <span className="mgmt-label">Bloky:</span>
@@ -141,7 +187,14 @@ export default function AgendaPage() {
               className="block-chip"
               style={{ borderColor: block.barva, background: block.barva + '18', color: block.barva }}
             >
-              {block.nazev}
+              <button
+                type="button"
+                className="chip-label-btn"
+                onClick={() => openEditBlock(block)}
+                title="Přejmenovat blok"
+              >
+                {block.nazev}
+              </button>
               <button
                 type="button"
                 className="chip-remove"
@@ -209,6 +262,7 @@ export default function AgendaPage() {
             blocks={blocks}
             onDelete={handleDelete}
             onEdit={openEdit}
+            onUnschedule={handleUnschedule}
           />
         </div>
 
@@ -226,6 +280,8 @@ export default function AgendaPage() {
             onEdit={openEdit}
             onReorderPreview={handleReorderPreview}
             onReorderCommit={handleReorderCommit}
+            onUnschedule={handleUnschedule}
+            onAddIdea={openAddIdea}
           />
         )}
       </div>
@@ -238,13 +294,18 @@ export default function AgendaPage() {
           blocks={blocks}
           onSave={handleSave}
           onClose={closeForm}
+          initialMode={formInitialMode}
         />
       )}
       {showCategoryForm && (
         <CategoryForm onSave={handleCreateCategory} onClose={() => setShowCategoryForm(false)} />
       )}
       {showBlockForm && (
-        <BlockForm onSave={handleCreateBlock} onClose={() => setShowBlockForm(false)} />
+        <BlockForm
+          block={editingBlock}
+          onSave={editingBlock ? handleUpdateBlock : handleCreateBlock}
+          onClose={() => { setShowBlockForm(false); setEditingBlock(null); }}
+        />
       )}
     </div>
   );

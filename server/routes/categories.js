@@ -53,16 +53,10 @@ router.post('/', async (req, res) => {
 
 router.delete('/:key', async (req, res) => {
   const [existing] = await sql`SELECT * FROM categories WHERE key = ${req.params.key}`;
-  if (!existing) {
-    return res.status(404).json({ error: 'Kategorie nenalezena' });
-  }
-  if (existing.fixed) {
-    return res.status(409).json({ error: 'Výchozí kategorii nelze smazat' });
-  }
-  const [{ count }] = await sql`SELECT COUNT(*) AS count FROM agenda_items WHERE kategorie = ${req.params.key}`;
-  if (Number(count) > 0) {
-    return res.status(409).json({ error: 'Kategorie je použita u aktivit, nejprve je přesuňte nebo smažte' });
-  }
+  if (!existing) return res.status(404).json({ error: 'Kategorie nenalezena' });
+  if (existing.fixed) return res.status(409).json({ error: 'Výchozí kategorii nelze smazat' });
+  // Unassign activities (they stay in the schedule as uncategorised)
+  await sql`UPDATE agenda_items SET kategorie = NULL WHERE kategorie = ${req.params.key}`;
   await sql`DELETE FROM categories WHERE key = ${req.params.key}`;
   res.status(204).end();
 });

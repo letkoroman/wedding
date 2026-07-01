@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
-const COLOR_PRESETS = ['#D4AF37', '#9b7de0', '#5a9a5a', '#e09040', '#e07070', '#4a90d9', '#c46a6a', '#8B7355'];
+const COLOR_PRESETS = ['#D4AF37', '#9b7de0', '#5a9a5a', '#c46a6a', '#e07070', '#4a90d9', '#c46a6a', '#8B7355'];
 
-export default function BlockForm({ onSave, onClose }) {
-  const [nazev, setNazev] = useState('');
-  const [barva, setBarva] = useState(COLOR_PRESETS[0]);
+export default function BlockForm({ block, onSave, onClose }) {
+  const isEdit = Boolean(block);
+  const [nazev, setNazev] = useState(block?.nazev || '');
+  const [barva, setBarva] = useState(block?.barva || COLOR_PRESETS[0]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -15,7 +16,7 @@ export default function BlockForm({ onSave, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Nový blok programu</h3>
+        <h3>{isEdit ? 'Upravit blok' : 'Nový blok programu'}</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-row">
             <label htmlFor="block-nazev">Název bloku</label>
@@ -36,7 +37,7 @@ export default function BlockForm({ onSave, onClose }) {
                 <button
                   key={col}
                   type="button"
-                  className={`swatch ${barva === col ? 'selected' : ''}`}
+                  className={`swatch${barva === col ? ' selected' : ''}`}
                   style={{ background: col }}
                   aria-label={`Zvolit barvu ${col}`}
                   onClick={() => setBarva(col)}
@@ -59,7 +60,7 @@ export default function BlockForm({ onSave, onClose }) {
           </div>
           <div className="form-actions">
             <button type="button" className="btn btn-outline" onClick={onClose}>Zrušit</button>
-            <button type="submit" className="btn">Vytvořit blok</button>
+            <button type="submit" className="btn">{isEdit ? 'Uložit změny' : 'Vytvořit blok'}</button>
           </div>
         </form>
       </div>

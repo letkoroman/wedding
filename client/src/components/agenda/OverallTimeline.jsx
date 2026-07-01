@@ -2,42 +2,35 @@ import { toMinutes, minutesToLabel, fmtDuration } from './timeUtils.js';
 import { deriveColors } from './colors.js';
 
 function getCategory(categories, key) {
-  return categories.find((c) => c.key === key) || categories[0] || { icon: '', label: key, accent: '#999' };
+  if (!key) return { icon: '❓', label: 'Bez kategorie', accent: '#aaa' };
+  return categories.find((c) => c.key === key) || { icon: '❓', label: key, accent: '#aaa' };
 }
 
-// Group items into time-overlap clusters, preserving block info for display
-function buildSections(items, blocks) {
-  const sorted = [...items]
-    .map((i) => ({ ...i, startMin: toMinutes(i.casZacatku), endMin: toMinutes(i.casKonce) }))
-    .sort((a, b) => a.startMin - b.startMin);
-
+// Group enriched items into time-overlap clusters
+function buildClusters(enriched) {
+  const sorted = [...enriched].sort((a, b) => a.startMin - b.startMin);
   const clusters = [];
   let group = [sorted[0]];
   let groupEnd = sorted[0].endMin;
-
   for (let i = 1; i < sorted.length; i++) {
-    const item = sorted[i];
-    if (item.startMin < groupEnd) {
-      group.push(item);
-      groupEnd = Math.max(groupEnd, item.endMin);
+    if (sorted[i].startMin < groupEnd) {
+      group.push(sorted[i]);
+      groupEnd = Math.max(groupEnd, sorted[i].endMin);
     } else {
       clusters.push(group);
-      group = [item];
-      groupEnd = item.endMin;
+      group = [sorted[i]];
+      groupEnd = sorted[i].endMin;
     }
   }
   clusters.push(group);
-
-  return clusters.map((clusterItems) => {
-    const startMin = clusterItems[0].startMin;
-    const endMin = Math.max(...clusterItems.map((i) => i.endMin));
-    const blockIds = [...new Set(clusterItems.map((i) => i.blockId).filter(Boolean))];
-    const sharedBlock = blockIds.length === 1 ? blocks.find((b) => b.id === blockIds[0]) : null;
-    return { startMin, endMin, block: sharedBlock, rows: buildRows(clusterItems) };
+  return clusters.map((items) => {
+    const startMin = items[0].startMin;
+    const endMin = Math.max(...items.map((i) => i.endMin));
+    return { startMin, endMin, rows: buildRows(items) };
   });
 }
 
-// Within a cluster, split into sequential rows; overlapping items → parallel row
+// Split a cluster into sequential/parallel rows
 function buildRows(items) {
   const sorted = [...items].sort((a, b) => a.startMin - b.startMin);
   const rows = [];
@@ -46,8 +39,9 @@ function buildRows(items) {
     const group = [sorted[i]];
     let j = i + 1;
     while (j < sorted.length) {
-      const gEnd = Math.max(...group.map((g) => g.endMin));
-      if (sorted[j].startMin < gEnd) { group.push(sorted[j]); j++; } else break;
+      if (sorted[j].startMin < Math.max(...group.map((g) => g.endMin))) {
+        group.push(sorted[j]); j++;
+      } else break;
     }
     rows.push(group.length === 1 ? { type: 'single', item: group[0] } : { type: 'parallel', items: group });
     i = j;
@@ -55,48 +49,95 @@ function buildRows(items) {
   return rows;
 }
 
-export default function OverallTimeline({ items, categories, blocks = [], onDelete, onEdit }) {
-  if (!items.length) {
-    return <p className="empty-state">Zatím žádné naplánované aktivity.</p>;
+// Group sorted items into contiguous runs sharing the same blockId
+function buildGroupedAgenda(items, blocks) {
+  if (!items.length) return [];
+  const enriched = items
+    .map((i) => ({ ...i, startMin: toMinutes(i.casZacatku), endMin: toMinutes(i.casKonce) }))
+    .sort((a, b) => a.startMin - b.startMin);
+
+  const runs = [];
+  let curr = null;
+  for (const item of enriched) {
+    const bid = item.blockId || null;
+    if (!curr || curr.blockId !== bid) { curr = { blockId: bid, items: [] }; runs.push(curr); }
+    curr.items.push(item);
   }
-  const sections = buildSections(items, blocks);
+
+  return runs.map((run) => {
+    const block = run.blockId ? blocks.find((b) => b.id === run.blockId) : null;
+    const minStart = run.items[0].startMin;
+    const maxEnd = Math.max(...run.items.map((i) => i.endMin));
+    return { block, sections: buildClusters(run.items), minStart, maxEnd };
+  });
+}
+
+export default function OverallTimeline({ items, categories, blocks = [], onDelete, onEdit, onUnschedule }) {
+  if (!items.length) return <p className="empty-state">Zatím žádné naplánované aktivity.</p>;
+  const groups = buildGroupedAgenda(items, blocks);
+  let lastEnd = -1;
+
   return (
     <div className="grouped-agenda">
-      {sections.map((section, idx) => (
-        <AgendaSection
-          key={idx}
-          section={section}
-          categories={categories}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          isLast={idx === sections.length - 1}
-        />
-      ))}
+      {groups.map((group, gIdx) => {
+        const gap = lastEnd >= 0 ? group.minStart - lastEnd : 0;
+        lastEnd = group.maxEnd;
+        return (
+          <div key={gIdx} className="block-group">
+            {gap >= 30 && <GapRow minutes={gap} />}
+            {group.block && (
+              <div
+                className="block-header"
+                style={{ borderLeftColor: group.block.barva, background: group.block.barva + '10' }}
+              >
+                <span className="bh-name" style={{ color: group.block.barva }}>{group.block.nazev}</span>
+                <span className="bh-time">{minutesToLabel(group.minStart)} – {minutesToLabel(group.maxEnd)}</span>
+              </div>
+            )}
+            {group.sections.map((section, sIdx) => {
+              const intraGap = sIdx > 0 ? section.startMin - group.sections[sIdx - 1].endMin : 0;
+              return (
+                <div key={sIdx}>
+                  {intraGap >= 15 && <GapRow minutes={intraGap} compact />}
+                  <AgendaSection
+                    section={section}
+                    categories={categories}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    onUnschedule={onUnschedule}
+                    inBlock={!!group.block}
+                    isLast={sIdx === group.sections.length - 1 && gIdx === groups.length - 1}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function AgendaSection({ section, categories, onDelete, onEdit, isLast }) {
+function GapRow({ minutes, compact = false }) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const label = h > 0 ? (m > 0 ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
+  return <div className={`agenda-gap${compact ? ' compact' : ''}`}><span className="gap-label">– – {label} volno – –</span></div>;
+}
+
+function AgendaSection({ section, categories, onDelete, onEdit, onUnschedule, inBlock, isLast }) {
   return (
-    <div className={`agenda-section${isLast ? ' is-last' : ''}`}>
+    <div className={`agenda-section${inBlock ? ' in-block' : ''}${isLast ? ' is-last' : ''}`}>
       <div className="as-time-col">
         <div className="as-time-start">{minutesToLabel(section.startMin)}</div>
         <div className="as-time-end">– {minutesToLabel(section.endMin)}</div>
-        {section.block && (
-          <div
-            className="as-block-badge"
-            style={{ color: section.block.barva, borderColor: section.block.barva + '70', background: section.block.barva + '14' }}
-          >
-            {section.block.nazev}
-          </div>
-        )}
       </div>
       <div className="as-content">
         {section.rows.map((row, idx) =>
           row.type === 'single' ? (
-            <ActivityRow key={idx} item={row.item} categories={categories} onDelete={onDelete} onEdit={onEdit} />
+            <ActivityRow key={idx} item={row.item} categories={categories} onDelete={onDelete} onEdit={onEdit} onUnschedule={onUnschedule} />
           ) : (
-            <ParallelGroup key={idx} items={row.items} categories={categories} onDelete={onDelete} onEdit={onEdit} />
+            <ParallelGroup key={idx} items={row.items} categories={categories} onDelete={onDelete} onEdit={onEdit} onUnschedule={onUnschedule} />
           )
         )}
       </div>
@@ -104,21 +145,30 @@ function AgendaSection({ section, categories, onDelete, onEdit, isLast }) {
   );
 }
 
-function ActivityRow({ item, categories, onDelete, onEdit, inLane = false }) {
+function ActivityRow({ item, categories, onDelete, onEdit, onUnschedule, inLane = false }) {
   const cat = getCategory(categories, item.kategorie);
   const c = deriveColors(cat.accent);
   const duration = fmtDuration(item.casZacatku, item.casKonce);
+
+  function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', item.id);
+    e.dataTransfer.setData('text/x-type', 'scheduled');
+    e.dataTransfer.effectAllowed = 'move';
+  }
 
   return (
     <div
       className={`activity-row${inLane ? ' in-lane' : ''}`}
       style={{ borderLeftColor: c.border, background: c.bg, color: c.text }}
+      draggable
+      onDragStart={handleDragStart}
       onClick={() => onEdit(item)}
     >
       <div className="ar-body">
         <div className="ar-meta">
-          <span className="ar-cat">{cat.icon} {cat.label}</span>
+          <span className="ar-time">{item.casZacatku} – {item.casKonce}</span>
           {duration && <span className="ar-dur">{duration}</span>}
+          <span className="ar-cat">{cat.icon} {cat.label}</span>
         </div>
         <div className="ar-name">{item.nazev}</div>
         {!inLane && item.misto && <div className="ar-loc">📍 {item.misto}</div>}
@@ -137,20 +187,19 @@ function ActivityRow({ item, categories, onDelete, onEdit, inLane = false }) {
   );
 }
 
-function ParallelGroup({ items, categories, onDelete, onEdit }) {
+function ParallelGroup({ items, categories, onDelete, onEdit, onUnschedule }) {
   return (
     <div className="parallel-group">
       <div className="pg-lanes">
         {items.map((item) => {
           const cat = getCategory(categories, item.kategorie);
           const c = deriveColors(cat.accent);
-          const laneLabel = item.misto || `${cat.icon} ${cat.label}`;
           return (
             <div key={item.id} className="pg-lane">
               <div className="pg-lane-head" style={{ color: c.border, borderBottomColor: c.border + '50', background: c.border + '0f' }}>
-                {item.misto ? `📍 ${item.misto}` : laneLabel}
+                {item.misto ? `📍 ${item.misto}` : `${cat.icon} ${cat.label}`}
               </div>
-              <ActivityRow item={item} categories={categories} onDelete={onDelete} onEdit={onEdit} inLane />
+              <ActivityRow item={item} categories={categories} onDelete={onDelete} onEdit={onEdit} onUnschedule={onUnschedule} inLane />
             </div>
           );
         })}

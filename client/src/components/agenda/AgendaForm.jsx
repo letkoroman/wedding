@@ -14,11 +14,13 @@ function buildEmptyForm(categories, blocks, presetIdea) {
   };
 }
 
-export default function AgendaForm({ item, presetIdea, categories, blocks = [], onSave, onClose }) {
+export default function AgendaForm({ item, presetIdea, categories, blocks = [], onSave, onClose, initialMode }) {
   const isEdit = Boolean(item);
   const hasTimeAlready = Boolean(item?.casZacatku && item?.casKonce);
 
-  const [mode, setMode] = useState(presetIdea || hasTimeAlready || !isEdit ? 'schedule' : 'idea');
+  const [mode, setMode] = useState(
+    initialMode || (presetIdea || hasTimeAlready || !isEdit ? 'schedule' : 'idea')
+  );
   const [form, setForm] = useState(() =>
     item
       ? {

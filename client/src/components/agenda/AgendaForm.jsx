@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react';
 import { TIME_OPTIONS, toMinutes, minutesToLabel, fmtDuration } from './timeUtils.js';
 import { deriveColors } from './colors.js';
 
-function buildEmptyForm(categories, presetIdea) {
+function buildEmptyForm(categories, blocks, presetIdea) {
   return {
     nazev: presetIdea?.nazev || '',
     kategorie: presetIdea?.kategorie || categories[0]?.key || '',
     misto: presetIdea?.misto || '',
     popis: presetIdea?.poznamka || '',
+    blockId: presetIdea?.blockId || null,
     casZacatku: '10:00',
     casKonce: '11:00'
   };
 }
 
-export default function AgendaForm({ item, presetIdea, categories, onSave, onClose }) {
+export default function AgendaForm({ item, presetIdea, categories, blocks = [], onSave, onClose }) {
   const isEdit = Boolean(item);
   const hasTimeAlready = Boolean(item?.casZacatku && item?.casKonce);
 
@@ -25,10 +26,11 @@ export default function AgendaForm({ item, presetIdea, categories, onSave, onClo
           kategorie: item.kategorie,
           misto: item.misto || '',
           popis: item.poznamka || '',
+          blockId: item.blockId || null,
           casZacatku: item.casZacatku || '10:00',
           casKonce: item.casKonce || '11:00'
         }
-      : buildEmptyForm(categories, presetIdea)
+      : buildEmptyForm(categories, blocks, presetIdea)
   );
   const [durationMin, setDurationMin] = useState(60);
 
@@ -72,6 +74,7 @@ export default function AgendaForm({ item, presetIdea, categories, onSave, onClo
       kategorie: form.kategorie,
       misto: form.misto,
       poznamka: form.popis,
+      blockId: form.blockId || null,
       casZacatku: mode === 'schedule' ? form.casZacatku : null,
       casKonce: mode === 'schedule' ? form.casKonce : null
     });
@@ -107,6 +110,22 @@ export default function AgendaForm({ item, presetIdea, categories, onSave, onClo
               </div>
             )}
           </div>
+
+          {blocks.length > 0 && (
+            <div className="form-row">
+              <label htmlFor="block-select">Blok programu (volitelné)</label>
+              <select
+                id="block-select"
+                value={form.blockId || ''}
+                onChange={(e) => update('blockId', e.target.value || null)}
+              >
+                <option value="">— bez bloku —</option>
+                {blocks.map((b) => (
+                  <option key={b.id} value={b.id}>{b.nazev}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-row">
             <label>Termín</label>

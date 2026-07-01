@@ -45,3 +45,10 @@ export const categoriesApi = {
   create: (data) => request('/categories', { method: 'POST', body: JSON.stringify(data) }),
   remove: (key) => request(`/categories/${key}`, { method: 'DELETE' })
 };
+
+export const blocksApi = {
+  list: () => request('/blocks'),
+  create: (data) => request('/blocks', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => request(`/blocks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id) => request(`/blocks/${id}`, { method: 'DELETE' }),
+};

@@ -26,7 +26,8 @@ function toAgendaItem(row) {
     kategorie: row.kategorie || 'ceremonie',
     misto: row.misto || '',
     priorita: row.priorita,
-    poznamka: row.poznamka
+    poznamka: row.poznamka,
+    blockId: row.block_id || null
   };
 }
 
@@ -44,10 +45,11 @@ router.post('/', async (req, res) => {
   const misto = req.body.misto || '';
   const priorita = Number(req.body.priorita) || 0;
   const poznamka = req.body.poznamka || '';
+  const blockId = req.body.blockId || null;
 
   const [row] = await sql`
-    INSERT INTO agenda_items (nazev, cas_zacatku, trvani, kategorie, cas_konce, misto, priorita, poznamka)
-    VALUES (${nazev}, ${casZacatku}, ${trvani}, ${kategorie}, ${casKonce}, ${misto}, ${priorita}, ${poznamka})
+    INSERT INTO agenda_items (nazev, cas_zacatku, trvani, kategorie, cas_konce, misto, priorita, poznamka, block_id)
+    VALUES (${nazev}, ${casZacatku}, ${trvani}, ${kategorie}, ${casKonce}, ${misto}, ${priorita}, ${poznamka}, ${blockId})
     RETURNING *
   `;
   res.status(201).json(toAgendaItem(row));
@@ -66,6 +68,7 @@ router.put('/:id', async (req, res) => {
   const misto = req.body.misto ?? (existing.misto || '');
   const priorita = req.body.priorita !== undefined ? Number(req.body.priorita) || 0 : existing.priorita;
   const poznamka = req.body.poznamka ?? existing.poznamka;
+  const blockId = req.body.blockId !== undefined ? (req.body.blockId || null) : existing.block_id;
 
   const [row] = await sql`
     UPDATE agenda_items SET
@@ -76,7 +79,8 @@ router.put('/:id', async (req, res) => {
       cas_konce = ${casKonce},
       misto = ${misto},
       priorita = ${priorita},
-      poznamka = ${poznamka}
+      poznamka = ${poznamka},
+      block_id = ${blockId}
     WHERE id = ${req.params.id}
     RETURNING *
   `;

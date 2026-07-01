@@ -4,6 +4,7 @@ import agendaRouter from './routes/agenda.js';
 import tasksRouter from './routes/tasks.js';
 import accommodationsRouter from './routes/accommodations.js';
 import categoriesRouter from './routes/categories.js';
+import blocksRouter from './routes/blocks.js';
 
 const app = express();
 
@@ -14,5 +15,6 @@ app.use('/api/agenda', agendaRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/accommodations', accommodationsRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/blocks', blocksRouter);
 
 export default app;

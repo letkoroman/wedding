@@ -29,7 +29,8 @@
 }
 
 .hero-date {
-  font-size: 16px;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
   letter-spacing: 6px;
   text-transform: uppercase;
   opacity: 0.9;
@@ -56,7 +57,8 @@
 }
 
 .hero-countdown-label {
-  font-size: 13px;
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
   letter-spacing: 3px;
   text-transform: uppercase;
   margin-top: 6px;

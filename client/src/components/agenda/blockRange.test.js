@@ -45,6 +45,16 @@ test('expands both ends and names both causing activities', () => {
   assert.deepEqual(result.expandedByNames, ['Příprava', 'Přípitek']);
 });
 
+test('does not duplicate the activity name when a single activity expands both ends', () => {
+  const block = { id: 'b1', casZacatku: '10:00', casKonce: '14:00' };
+  const items = [{ nazev: 'Dlouhá aktivita', casZacatku: '09:00', casKonce: '15:00' }];
+  const result = computeBlockRange(block, items);
+  assert.equal(result.startLabel, '09:00');
+  assert.equal(result.endLabel, '15:00');
+  assert.equal(result.isExpanded, true);
+  assert.deepEqual(result.expandedByNames, ['Dlouhá aktivita']);
+});
+
 test('falls back to the activities range when the block has no manual time set', () => {
   const block = { id: 'b1', casZacatku: null, casKonce: null };
   const items = [

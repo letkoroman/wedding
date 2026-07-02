@@ -2,6 +2,9 @@ import { toMinutes, minutesToLabel } from './timeUtils.js';
 
 // items must be non-empty; each item needs nazev/casZacatku/casKonce (already-enriched agenda items).
 export function computeBlockRange(block, items) {
+  if (items.length === 0) {
+    throw new Error('computeBlockRange requires a non-empty items array');
+  }
   const manualStart = block.casZacatku ? toMinutes(block.casZacatku) : null;
   const manualEnd = block.casKonce ? toMinutes(block.casKonce) : null;
 
@@ -22,8 +25,7 @@ export function computeBlockRange(block, items) {
 
   const expandedByNames = [];
   if (expandedStart) expandedByNames.push(earliest.nazev);
-  if (expandedEnd && latest.nazev !== earliest.nazev) expandedByNames.push(latest.nazev);
-  else if (expandedEnd) expandedByNames.push(latest.nazev);
+  if (expandedEnd && !(expandedStart && latest === earliest)) expandedByNames.push(latest.nazev);
 
   return {
     startMin: effectiveStart,

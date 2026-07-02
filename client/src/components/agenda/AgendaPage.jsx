@@ -171,7 +171,9 @@ export default function AgendaPage() {
       <div className="page-header">
         <h2>Program svatebního dne</h2>
         <div className="page-actions">
-          <button className="btn" onClick={openAddSchedule}>+ Přidat aktivitu</button>
+          <button className="btn fab-add-activity" onClick={openAddSchedule}>
+            <span className="fab-icon" aria-hidden="true">+</span> Přidat aktivitu
+          </button>
           <button className="btn btn-outline" onClick={() => setShowCategoryForm(true)}>+ Kategorie</button>
           <button className="btn btn-outline" onClick={openNewBlock}>+ Blok</button>
         </div>

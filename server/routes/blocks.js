@@ -30,12 +30,18 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { nazev, barva, casZacatku = null, casKonce = null } = req.body;
+  const [existing] = await sql`SELECT * FROM blocks WHERE id = ${req.params.id}`;
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+
+  const nazev = req.body.nazev ?? existing.nazev;
+  const barva = req.body.barva ?? existing.barva;
+  const casZacatku = req.body.casZacatku !== undefined ? req.body.casZacatku : existing.cas_zacatku;
+  const casKonce = req.body.casKonce !== undefined ? req.body.casKonce : existing.cas_konce;
+
   const [row] = await sql`
     UPDATE blocks SET nazev=${nazev}, barva=${barva}, cas_zacatku=${casZacatku}, cas_konce=${casKonce}
     WHERE id=${req.params.id} RETURNING *
   `;
-  if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(toBlock(row));
 });
 

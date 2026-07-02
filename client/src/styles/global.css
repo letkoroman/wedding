@@ -10,12 +10,23 @@ html, body, #root {
 
 body {
   font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
   background: var(--color-ivory);
   color: var(--color-text);
 }
 
-h1, h2, h3, h4 {
+h1 {
   font-family: var(--font-heading);
+  margin: 0 0 0.5em;
+  color: var(--color-text);
+}
+
+h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-size: var(--text-heading-size);
+  line-height: var(--text-heading-line);
+  font-weight: var(--weight-semibold);
   margin: 0 0 0.5em;
   color: var(--color-text);
 }
@@ -46,7 +57,8 @@ button {
   border: none;
   border-radius: 999px;
   padding: 10px 24px;
-  font-weight: 700;
+  font-size: var(--text-body-size);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.5px;
   background: var(--color-rose);
   color: #fff;
@@ -108,8 +120,9 @@ button {
 }
 
 .form-row label {
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
 }
 
 .form-row input,
@@ -119,7 +132,8 @@ button {
   padding: 8px 10px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
 }
 
 .form-row-checkbox label {
@@ -140,8 +154,9 @@ button {
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--text-caption-size);
+  line-height: var(--text-caption-line);
+  font-weight: var(--weight-semibold);
 }
 
 .badge-waiting {
@@ -171,7 +186,8 @@ button {
   background: #fff;
   border-radius: 999px;
   padding: 6px 16px;
-  font-size: 13px;
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
   color: var(--color-text-light);
 }
 

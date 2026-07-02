@@ -11,6 +11,19 @@
   --font-heading: 'Playfair Display', serif;
   --font-body: 'Lato', sans-serif;
 
+  --text-heading-size: 20px;
+  --text-heading-line: 1.2;
+  --text-body-size: 15px;
+  --text-body-line: 1.5;
+  --text-caption-size: 12px;
+  --text-caption-line: 1.5;
+  --weight-regular: 400;
+  --weight-semibold: 700;
+  --color-warning: #b3812f;
+  --color-warning-bg: #fdf3d9;
+  --color-warning-border: #e8d9a8;
+  --color-rose-dark: #c48d9a;
+
   --radius: 12px;
   --shadow: 0 2px 12px rgba(74, 63, 58, 0.08);
 }

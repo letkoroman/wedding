@@ -32,6 +32,7 @@ export default function Hero() {
             key={slide.src}
             src={slide.src}
             alt={slide.alt}
+            aria-hidden="true"
             className={`hero-photo${i === slideIndex ? ' is-active' : ''}`}
             style={{ objectPosition: slide.position }}
           />
@@ -51,13 +52,12 @@ export default function Hero() {
       {SLIDES.length > 1 && (
         <div className="hero-nav">
           <button type="button" className="hero-nav-arrow" aria-label="Předchozí fotka" onClick={() => goTo(slideIndex - 1)}>‹</button>
-          <div className="hero-dots" role="tablist" aria-label="Výběr fotky">
+          <div className="hero-dots" role="group" aria-label="Výběr fotky">
             {SLIDES.map((slide, i) => (
               <button
                 key={slide.src}
                 type="button"
-                role="tab"
-                aria-selected={i === slideIndex}
+                aria-current={i === slideIndex ? 'true' : undefined}
                 aria-label={`Fotka ${i + 1}`}
                 className={`hero-dot${i === slideIndex ? ' is-active' : ''}`}
                 onClick={() => goTo(i)}

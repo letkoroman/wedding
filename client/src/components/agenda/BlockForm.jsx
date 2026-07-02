@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TIME_OPTIONS } from './timeUtils.js';
+import { TIME_OPTIONS, toMinutes } from './timeUtils.js';
 
 const COLOR_PRESETS = ['#D4AF37', '#9b7de0', '#5a9a5a', '#c46a6a', '#e07070', '#4a90d9', '#6fa8c9', '#8B7355'];
 
@@ -93,6 +93,9 @@ export default function BlockForm({ block, onSave, onClose }) {
                 </div>
               </div>
             </div>
+            {toMinutes(casKonce) <= toMinutes(casZacatku) && (
+              <p className="form-computed-value">Konec musí být po začátku</p>
+            )}
           </div>
           <div className="form-actions">
             <button type="button" className="btn btn-outline" onClick={onClose}>Zrušit</button>

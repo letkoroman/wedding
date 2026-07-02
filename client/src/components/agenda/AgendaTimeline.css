@@ -78,18 +78,35 @@
 .chip-label-btn:hover { opacity: 0.75; }
 
 /* ─── Block group + block header ─── */
-.block-group { display: contents; }
+.block-group {
+  border-left: 4px solid transparent;
+  transition: background 0.15s ease;
+}
+.block-group + .block-group {
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
 .block-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 18px 9px 14px; border-left: 4px solid; border-bottom: 1px solid var(--color-border);
+  padding: 9px 18px 9px 14px; border-bottom: 1px solid var(--color-border);
 }
 .bh-name {
   font-family: var(--font-heading); font-size: var(--text-body-size); line-height: var(--text-body-line); font-weight: var(--weight-semibold); letter-spacing: 0.2px;
 }
 .bh-time { font-size: var(--text-caption-size); line-height: var(--text-caption-line); color: var(--color-text-light); font-weight: var(--weight-semibold); }
+.bh-time-adjusted { color: var(--color-warning); font-weight: 700; }
 
-/* Slight indent for sections belonging to a block */
-.agenda-section.in-block .as-time-col { background: #f7f4f0; }
+/* ─── Auto-expand notice banner ─── */
+.block-time-notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--color-warning-bg); border-bottom: 1px solid var(--color-warning-border);
+  color: var(--color-warning); padding: 6px 14px; font-size: 12px;
+}
+.block-time-notice button {
+  border: none; background: transparent; color: inherit; cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 2px 4px; flex-shrink: 0;
+}
+.block-time-notice button:hover { opacity: 0.7; }
 
 /* ─── Gap row (time axis indicator) ─── */
 .agenda-gap {

@@ -1,5 +1,6 @@
 import { toMinutes, minutesToLabel, fmtDuration } from './timeUtils.js';
 import { deriveColors } from './colors.js';
+import BlockHeader from './BlockHeader.jsx';
 
 function getCategory(categories, key) {
   if (!key) return { icon: '❓', label: 'Bez kategorie', accent: '#aaa' };
@@ -68,7 +69,7 @@ function buildGroupedAgenda(items, blocks) {
     const block = run.blockId ? blocks.find((b) => b.id === run.blockId) : null;
     const minStart = run.items[0].startMin;
     const maxEnd = Math.max(...run.items.map((i) => i.endMin));
-    return { block, sections: buildClusters(run.items), minStart, maxEnd };
+    return { block, items: run.items, sections: buildClusters(run.items), minStart, maxEnd };
   });
 }
 
@@ -82,18 +83,15 @@ export default function OverallTimeline({ items, categories, blocks = [], onDele
       {groups.map((group, gIdx) => {
         const gap = lastEnd >= 0 ? group.minStart - lastEnd : 0;
         lastEnd = group.maxEnd;
+        const blockTint = group.block ? deriveColors(group.block.barva) : null;
         return (
-          <div key={gIdx} className="block-group">
+          <div
+            key={gIdx}
+            className="block-group"
+            style={blockTint ? { borderLeftColor: blockTint.border, background: blockTint.bg } : undefined}
+          >
             {gap >= 30 && <GapRow minutes={gap} />}
-            {group.block && (
-              <div
-                className="block-header"
-                style={{ borderLeftColor: group.block.barva, background: group.block.barva + '10' }}
-              >
-                <span className="bh-name" style={{ color: group.block.barva }}>{group.block.nazev}</span>
-                <span className="bh-time">{minutesToLabel(group.minStart)} – {minutesToLabel(group.maxEnd)}</span>
-              </div>
-            )}
+            {group.block && <BlockHeader block={group.block} items={group.items} />}
             {group.sections.map((section, sIdx) => {
               const intraGap = sIdx > 0 ? section.startMin - group.sections[sIdx - 1].endMin : 0;
               return (

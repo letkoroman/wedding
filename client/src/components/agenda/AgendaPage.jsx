@@ -189,21 +189,24 @@ export default function AgendaPage() {
               className="block-chip"
               style={{ borderColor: block.barva, background: block.barva + '18', color: block.barva }}
             >
+              <span className="chip-name">{block.nazev}</span>
               <button
                 type="button"
-                className="chip-label-btn"
+                className="chip-icon-btn"
+                aria-label={`Upravit blok ${block.nazev}`}
+                title="Upravit blok"
                 onClick={() => openEditBlock(block)}
-                title="Přejmenovat blok"
               >
-                {block.nazev}
+                ✏️
               </button>
               <button
                 type="button"
-                className="chip-remove"
+                className="chip-icon-btn chip-icon-btn-danger"
                 aria-label={`Smazat blok ${block.nazev}`}
+                title="Smazat blok"
                 onClick={() => handleDeleteBlock(block.id)}
               >
-                ✕
+                🗑
               </button>
             </span>
           ))}

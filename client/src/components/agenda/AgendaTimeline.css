@@ -26,11 +26,15 @@
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
   border-radius: 999px; font-size: var(--text-caption-size); line-height: var(--text-caption-line); font-weight: var(--weight-semibold); border: 1px solid;
 }
-.block-chip .chip-remove, .chip-remove {
-  border: none; background: rgba(0,0,0,0.08); color: inherit; width: 16px; height: 16px;
-  border-radius: 50%; font-size: 10px; line-height: 1; cursor: pointer; margin-left: 2px;
+.chip-name { padding-right: 2px; }
+.chip-icon-btn {
+  border: none; background: rgba(0,0,0,0.08); color: inherit; width: 20px; height: 20px;
+  border-radius: 50%; font-size: 10px; line-height: 1; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.12s ease;
 }
+.chip-icon-btn:hover { background: rgba(0,0,0,0.16); }
+.chip-icon-btn-danger:hover { background: var(--color-danger); }
 .block-preview-chip {
   margin-top: 8px; border: 1.5px solid; border-radius: 8px; padding: 7px 12px;
   font-size: var(--text-caption-size); line-height: var(--text-caption-line); font-weight: var(--weight-semibold);
@@ -68,14 +72,6 @@
 }
 .page-main { min-width: 0; border-radius: var(--radius); transition: background 0.15s ease, outline 0.15s ease; }
 .page-main.drop-target-active { background: #fdf3ee; outline: 2px dashed var(--color-rose); outline-offset: -2px; border-radius: var(--radius); }
-
-/* ─── Block chip edit button ─── */
-.chip-label-btn {
-  border: none; background: transparent; color: inherit; font: inherit;
-  font-weight: var(--weight-semibold); font-size: var(--text-caption-size); line-height: var(--text-caption-line); cursor: pointer; padding: 0;
-  text-decoration: underline dotted;
-}
-.chip-label-btn:hover { opacity: 0.75; }
 
 /* ─── Block group + block header ─── */
 .block-group {

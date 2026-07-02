@@ -260,6 +260,13 @@
   .as-time-col { padding: 12px 10px 12px 12px; }
   .as-content { padding: 10px 10px; }
   .filter-section { flex-direction: column; gap: 6px; }
+  .pill-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .pill-wrap { flex-shrink: 0; }
 }
 
 /* ─── Přidat aktivitu FAB ─── */

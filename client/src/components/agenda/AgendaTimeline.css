@@ -258,7 +258,7 @@
   .form-row-pair { grid-template-columns: 1fr; }
   .time-field-pair { flex-direction: column; }
   .agenda-section { grid-template-columns: 78px 1fr; }
-  .as-time-start { font-size: 14px; }
+  .as-time-start { font-size: var(--text-caption-size); }
   .pg-lanes { flex-direction: column; }
   .pg-lane + .pg-lane { border-top: 1px solid var(--color-border); padding-top: 0; }
   .ar-del { opacity: 0.55; }

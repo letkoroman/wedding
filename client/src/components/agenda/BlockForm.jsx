@@ -1,16 +1,27 @@
 import { useState } from 'react';
+import { TIME_OPTIONS } from './timeUtils.js';
 
-const COLOR_PRESETS = ['#D4AF37', '#9b7de0', '#5a9a5a', '#c46a6a', '#e07070', '#4a90d9', '#c46a6a', '#8B7355'];
+const COLOR_PRESETS = ['#D4AF37', '#9b7de0', '#5a9a5a', '#c46a6a', '#e07070', '#4a90d9', '#6fa8c9', '#8B7355'];
 
 export default function BlockForm({ block, onSave, onClose }) {
   const isEdit = Boolean(block);
   const [nazev, setNazev] = useState(block?.nazev || '');
   const [barva, setBarva] = useState(block?.barva || COLOR_PRESETS[0]);
+  const [casZacatku, setCasZacatku] = useState(block?.casZacatku || '10:00');
+  const [casKonce, setCasKonce] = useState(block?.casKonce || '14:00');
+
+  function step(field, dir) {
+    const current = field === 'casZacatku' ? casZacatku : casKonce;
+    const idx = TIME_OPTIONS.indexOf(current);
+    const nextIdx = (idx + dir + TIME_OPTIONS.length) % TIME_OPTIONS.length;
+    const next = TIME_OPTIONS[nextIdx];
+    if (field === 'casZacatku') setCasZacatku(next); else setCasKonce(next);
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!nazev.trim()) return;
-    onSave({ nazev: nazev.trim(), barva });
+    onSave({ nazev: nazev.trim(), barva, casZacatku, casKonce });
   }
 
   return (
@@ -56,6 +67,31 @@ export default function BlockForm({ block, onSave, onClose }) {
               style={{ borderColor: barva, background: barva + '1c', color: barva }}
             >
               {nazev || 'Náhled bloku'}
+            </div>
+          </div>
+          <div className="form-row">
+            <label>Čas bloku (24h formát)</label>
+            <div className="time-field-pair">
+              <div className="time-field">
+                <span className="time-field-label">Začátek</span>
+                <div className="time-stepper">
+                  <button type="button" className="stepper-btn" aria-label="O 15 minut dříve" onClick={() => step('casZacatku', -1)}>−</button>
+                  <select value={casZacatku} onChange={(e) => setCasZacatku(e.target.value)}>
+                    {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <button type="button" className="stepper-btn" aria-label="O 15 minut později" onClick={() => step('casZacatku', 1)}>+</button>
+                </div>
+              </div>
+              <div className="time-field">
+                <span className="time-field-label">Konec</span>
+                <div className="time-stepper">
+                  <button type="button" className="stepper-btn" aria-label="O 15 minut dříve" onClick={() => step('casKonce', -1)}>−</button>
+                  <select value={casKonce} onChange={(e) => setCasKonce(e.target.value)}>
+                    {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <button type="button" className="stepper-btn" aria-label="O 15 minut později" onClick={() => step('casKonce', 1)}>+</button>
+                </div>
+              </div>
             </div>
           </div>
           <div className="form-actions">

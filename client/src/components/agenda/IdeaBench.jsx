@@ -48,11 +48,15 @@ export default function IdeaBench({ ideas, categories, onAssign, onDelete, onEdi
           </button>
         )}
       </div>
+      <p className="bench-subtitle">Aktivity bez termínu — přetáhni je do programu</p>
       {isScheduledOver && (
         <div className="bench-drop-hint">📥 Pusť sem — aktivita se přesune do lavičky</div>
       )}
       {ideas.length === 0 ? (
-        <p className="bench-empty">Lavička je prázdná — nápady bez termínu se objeví zde.</p>
+        <div className="bench-empty-state">
+          <span className="bench-empty-icon" role="img" aria-hidden="true">🗂️</span>
+          <p className="bench-empty-text">Lavička je prázdná — nápady bez termínu se objeví zde.</p>
+        </div>
       ) : (
         <>
           <p className="bench-hint">

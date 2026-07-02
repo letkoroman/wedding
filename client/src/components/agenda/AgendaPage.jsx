@@ -251,7 +251,7 @@ export default function AgendaPage() {
       </div>
 
       {/* ─── Main two-column layout ─── */}
-      <div className={`page-layout${ideas.length === 0 ? ' bench-empty' : ''}`}>
+      <div className="page-layout">
         <div
           className={`page-main${isDropActive ? ' drop-target-active' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setIsDropActive(true); }}
@@ -268,24 +268,17 @@ export default function AgendaPage() {
           />
         </div>
 
-        {ideas.length === 0 ? (
-          <div className="bench-rail-empty" aria-label="Lavička nápadů je prázdná">
-            <span role="img" aria-hidden="true">🗂️</span>
-            <small>Lavička prázdná</small>
-          </div>
-        ) : (
-          <IdeaBench
-            ideas={ideas}
-            categories={categories}
-            onAssign={openAssignIdea}
-            onDelete={handleDelete}
-            onEdit={openEdit}
-            onReorderPreview={handleReorderPreview}
-            onReorderCommit={handleReorderCommit}
-            onUnschedule={handleUnschedule}
-            onAddIdea={openAddIdea}
-          />
-        )}
+        <IdeaBench
+          ideas={ideas}
+          categories={categories}
+          onAssign={openAssignIdea}
+          onDelete={handleDelete}
+          onEdit={openEdit}
+          onReorderPreview={handleReorderPreview}
+          onReorderCommit={handleReorderCommit}
+          onUnschedule={handleUnschedule}
+          onAddIdea={openAddIdea}
+        />
       </div>
 
       {showForm && (

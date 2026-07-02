@@ -86,7 +86,7 @@ export default function OverallTimeline({ items, categories, blocks = [], onDele
         const blockTint = group.block ? deriveColors(group.block.barva) : null;
         return (
           <div
-            key={gIdx}
+            key={group.block ? `block-${group.block.id}` : `ungrouped-${gIdx}`}
             className="block-group"
             style={blockTint ? { borderLeftColor: blockTint.border, background: blockTint.bg } : undefined}
           >

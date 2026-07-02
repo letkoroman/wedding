@@ -32,7 +32,7 @@ export default function Hero() {
             key={slide.src}
             src={slide.src}
             alt={slide.alt}
-            aria-hidden="true"
+            aria-hidden={i === slideIndex ? undefined : 'true'}
             className={`hero-photo${i === slideIndex ? ' is-active' : ''}`}
             style={{ objectPosition: slide.position }}
           />
